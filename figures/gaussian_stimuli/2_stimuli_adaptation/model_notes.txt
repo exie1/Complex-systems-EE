@@ -1,0 +1,6 @@
+weights [6,6], rates [500,500], adaptation [0,+16], positions [0,0], [-32,-32]:
+total duration in each stim (ms): 3740 2809, ratio = 0.7510695187165776
+times spent in each stim + mean duration (ms)
+[97, 137, 31, 168, 368, 1, 344, 375, 763, 4, 238, 1, 411, 15, 369, 417]             233.6875
+[13, 17, 290, 1, 1, 370, 1, 1, 336, 348, 306, 2, 1, 356, 3, 2, 6, 396, 1, 358]      140.45
+mean duration ratio: 		0.6010163145225996

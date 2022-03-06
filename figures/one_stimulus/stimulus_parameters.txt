@@ -1,0 +1,3 @@
+circular stimulus: radius = 5, centre = [0,0]
+200 input weight
+200 Hz average firing rate
