@@ -1,3 +1,0 @@
-circular stimulus x2: r = 5, c = (-15,15), (15,-15)
-w_inp = 200 nS
-freq = 200 Hz
