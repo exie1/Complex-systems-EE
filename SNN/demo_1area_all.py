@@ -218,7 +218,7 @@ data = {'datetime':now.strftime("%Y-%m-%d %H:%M:%S"), 'dt':0.1, #'loop_num':loop
               'gi':{'i':spk_i_1.i[:],'t':spk_tstep_i1}}}
 
 print(data['a1']['ge'])
-# os.chdir('C:/Users/Evan Xie/Desktop/SBstuff/model_code')
+# os.chdir('C:/Users/Evan Xie/Documents/GitHub/Complex-systems-EE/SNN/simulations')
 # filename = 'one_stim.pickle'
 # with open(filename, 'wb') as handle:
 #     pickle.dump(data, handle)
