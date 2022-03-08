@@ -15,7 +15,7 @@ ths = 2*sqrt(p.sigma2);
 [X,t] = fHMC_opt(T,a,p,num_avg);
 durations = closest_stim(X,p,ths,num_avg);
 disp(durations)
-
+%% Plotting
 
 figure('color','w');
 plot(X(1,:,1),X(2,:,1),'.','markersize',1)
@@ -25,7 +25,7 @@ xlabel('x')
 ylabel('y')
 axis equal
 
-%%
+hist3(X(:,:,1))
 
 
 %% Step distribution

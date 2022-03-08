@@ -7,16 +7,13 @@ num_parallel = 2;
 
 %--------Creating lattice for stimulus locations----------------
 boundaries = linspace(-pi+0.5,pi-0.5,3);
-[x,y] = meshgrid(boundaries,boundaries);
-locations = [];
-for i = 1:size(x,1)*size(x,2)
-    locations = [locations ; x(i),y(i)];
-end
+locations = build_lattice(boundaries);
 depths = [0.8445;0.1969;0.8172;0.7434;0.1558;0.2688;0.8570;0.3224;0.0587];
 % depths = rand(size(locations,1),1);
 width = 0.005;
 volume = sum(pi*depths/width);
 %-----------------------------------------------------------------
+
 p.location = locations;   
 p.sigma2 = width + zeros(size(locations,1),1);
 p.depth = depths/volume*10^3;       % Total reward = 10^3
@@ -58,8 +55,6 @@ ylabel("Total reward attained")
 title('Tail index v total reward')
 
 
-%%
-maxReward(T,a,p)
 
 %%
 

@@ -7,7 +7,7 @@ p.dt = 1e-3; % integration time step
 p.location = pi/2; %modal location 
 p.depth1 = 1;
 p.depth2 = 1;
-avgs = 5; % number of simulations averaged over
+avgs = 10; % number of simulations averaged over
 
 
 MET_list = [];

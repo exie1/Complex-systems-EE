@@ -112,8 +112,8 @@ for i = 1:n
     
     %drift term
     % non-fractional grad of 2d gaussian wells
-    p1 = w*exp(-0.5*(x(1)-p.location).^2/p.sigma2 - 0.5*x(2).^2/p.sigma2 );
-    p2 = (1-w)*exp(-0.5*(x(1)+p.location).^2/p.sigma2 - 0.5*x(2).^2/p.sigma2 );
+    p1 = exp(-0.5*(x(1)-p.location).^2/p.sigma2 - 0.5*x(2).^2/p.sigma2 );
+    p2 = exp(-0.5*(x(1)+p.location).^2/p.sigma2 - 0.5*x(2).^2/p.sigma2 );
     
     fx = p1*(-(x(1)-p.location)/p.sigma2 ) + p2*(-(x(1)+p.location)/p.sigma2 );
     fy = -x(2)/p.sigma2;

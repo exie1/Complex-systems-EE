@@ -1,6 +1,7 @@
-function mean_durations = closest_stim(X,p,ths,avg)
+function [mean_duration,total_duration] = closest_stim(X,p,ths,avg)
     % Find mean duration the sampling point stays in a stim
-    mean_durations = zeros(size(p.location,1),avg);
+    mean_duration = zeros(size(p.location,1),avg);
+    total_duration = zeros(size(p.location,1),avg);
     for j = 1:avg
         for i = 1:size(p.location,1)
             loc = p.location(i,:);
@@ -8,7 +9,8 @@ function mean_durations = closest_stim(X,p,ths,avg)
             in_stim = [0,(dist_stim<ths(i)),0];
             exit_indices = find([false,in_stim]~=[in_stim,false]);
             in_stim_times = (exit_indices(2:2:end) - exit_indices(1:2:end-1))*p.dt;
-            mean_durations(i,j) = mean(in_stim_times);
+            mean_duration(i,j) = mean(in_stim_times);
+            total_duration(i,j) = sum(in_stim_times);
         end
     end
 end
