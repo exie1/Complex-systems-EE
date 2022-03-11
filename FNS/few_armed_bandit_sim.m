@@ -12,7 +12,7 @@ p.location = [R*cos(theta),R*sin(theta);
     R*cos(theta+2*pi/3),R*sin(theta+2*pi/3);
     R*cos(theta+4*pi/3),R*sin(theta+4*pi/3)];
 p.depth = [1,1,1];
-p.sigma2 = ([1,1,0.5]/2).^2;
+p.sigma2 = ([1,1,1]/2).^2;
 ths = 2*sqrt(p.sigma2);
 
 
@@ -26,7 +26,7 @@ rewards_total = sum(rewards,1)/size(X,2);
 disp([mean(rewards_total),std(rewards_total)])
 disp([mean(mean_dur,2),std(mean_dur,0,2),mean(total_dur,2),std(total_dur,0,2)])
 
-% ---------------------Displaying results--------------------------
+%% ---------------------Displaying results--------------------------
 figure
 
 subplot(1,3,1)
@@ -36,7 +36,9 @@ xlabel('x')
 ylabel('y')
 
 subplot(1,3,2)
+hold on
 hist3(squeeze(X(:,:,1))',[50,50],'CDataMode','auto','FaceColor','interp')
+% plot3(X(1,:,1),X(2,:,1),rewards(:,1)*1400,'.','markersize',1) 
 xlabel('x')
 ylabel('y')
 
