@@ -13,10 +13,10 @@ theta = pi/2;
 %     R*cos(theta+4*pi/3),R*sin(theta+4*pi/3)];
 % p.depth = [1,1,1];
 % p.sigma2 = ([1,1,1]/2).^2;
-boundaries = linspace(-3*pi/5,3*pi/5,3);
+boundaries = linspace(-3*pi/4,3*pi/4,3);
 p.location = build_lattice(boundaries);
 p.depth = 1+zeros(length(p.location),1);
-p.sigma2 = ((pi/4+zeros(length(p.location),1))/2).^2;
+p.sigma2 = ((1+zeros(length(p.location),1))/2).^2;
 ths = 2*sqrt(p.sigma2);
 
 
@@ -58,12 +58,14 @@ ylabel('y')
 
 %% Looping business 
 
-avgs = 100; % should average more or increase sampling time for more stimuli
+p.depth = 1+zeros(length(p.location),1);
+avgs = 30; % average more or increase sampling time for more stimuli
 total_times = [];
 mean_times = [];
 for i = 1:length(p.depth)
-    p.sigma2(i) = 1e-10;
-    ths = 2*sqrt(p.sigma2); 
+%     p.sigma2 = ([1,1,depth_list(i)]/2).^2;
+%     ths = 2*sqrt(p.sigma2); 
+    p.de
     [X,t] = fHMC_opt(T,a,p,avgs);
     [mean_dur,total_dur] = closest_stim(X,p,ths,avgs);
     total_times = [total_times, mean(total_dur,2)];
@@ -75,15 +77,12 @@ end
 %%
 figure 
 hold on
-
-% plot(depth_list,total_times(1,:))
-% plot(depth_list,total_times(2,:))
-% plot(depth_list,total_times(3,:))
-% plot(depth_list,sum(total_times,1))
-plot(flip(1:9),sum(total_times,1))
-xlabel('Number of stimuli')
+plot(depth_list,total_times(1,:))
+plot(depth_list,total_times(2,:))
+plot(depth_list,total_times(3,:))
+plot(depth_list,sum(total_times,1))
+xlabel('Relative width of stimulus 3')
 ylabel('total duration in stimuli (s)')
-ylim([0,100])
 title('Total duration in stimuli over 100 s simulation')
-% legend('Stimulus 1', 'Stimulus 2','Stimulus 3 (varying width)','Sum')
+legend('Stimulus 1', 'Stimulus 2','Stimulus 3 (varying width)','Sum')
 

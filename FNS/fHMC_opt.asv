@@ -21,7 +21,7 @@ function [X,t] = fHMC_opt(T,a,p,avg)
 
     X = zeros(m,n,avg);
     for i = 1:n
-        f = makeGaussian(x,p);
+        f = makeGaussian(x,p,false);
 
         dL = stblrnd(a,0,p.gam,0,[2,avg]); 
         r = sqrt(sum(dL.*dL,1)); %step length
@@ -32,11 +32,7 @@ function [X,t] = fHMC_opt(T,a,p,avg)
         % Stochastic fractional Hamiltonian Monte Carlo
         vnew = v + p.beta*ca*f*dt;
         xnew = x + p.gam*ca*f*dt + p.beta*v*dt + g*dta;
-        
-%         % Fractional Underdamped Langevin
-%         vnew = v - p.gam*v*dt - ca*f*dt + (p.gam/p.beta)^(1/a) * g*dta;
-%         xnew = x + v;
-        
+
         x = xnew;
         v = vnew;
 
@@ -47,23 +43,31 @@ function [X,t] = fHMC_opt(T,a,p,avg)
 end
 
 
-function f = makeGaussian(x,p)
+function f = makeGaussian(x,p,Truncate)
+% x = initial conditions vector, p = stimulus parameters class, Truncate =
+% truncated gaussian logical
     fx = 0;
     fy = 0;
     fn = 0;
-    for j = 1:size(p.location,1) % optimise: compute x,y stuff together
+    for j = 1:size(p.location,1)
         distx = x(1,:)-p.location(j,1);
         disty = x(2,:)-p.location(j,2);
         stim = p.depth(j) * exp(-0.5*(distx.^2+disty.^2)/p.sigma2(j));
-
-        fx = fx + stim.*(-distx/p.sigma2(j));
-        fy = fy + stim.*(-disty/p.sigma2(j));
+        
+        if Truncate
+            fx = fx + stim.*(-distx/p.sigma2(j)).* ...
+                (sqrt(distx.^2+disty.^2)<=2*sqrt(p.sigma2(j)));
+            fy = fy + stim.*(-disty/p.sigma2(j)).* ...
+                (sqrt(distx.^2+disty.^2)<=2*sqrt(p.sigma2(j)));
+        else
+            fx = fx + stim.*(-distx/p.sigma2(j));
+            fy = fy + stim.*(-disty/p.sigma2(j));
+        end
         fn = fn + stim;
 
     end
     f = [fx; fy]./fn;  % log derivative: add e-15 to avoid 0/0.
-
-   
+    
 end
 
 % for j = 1:size(p.location,1)
@@ -74,3 +78,8 @@ end
 %     fn = fn + stim;
 % end
 % f = [fx; fy]./fn; 
+
+% function integral_scheme(x,v,p)
+%     vnew = v + p.beta*ca*f*dt;
+%     xnew = x + p.gam*ca*f*dt + p.beta*v*dt + g*dta;
+% end
