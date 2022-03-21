@@ -7,7 +7,7 @@ num_parallel = 30;
 
 %--------Defining stimuli and running simulation--------------------
 R = pi/2;
-theta = pi/2;
+theta = pi/2;   % for triangle stim
 % p.location = [R*cos(theta),R*sin(theta); 
 %     R*cos(theta+2*pi/3),R*sin(theta+2*pi/3);
 %     R*cos(theta+4*pi/3),R*sin(theta+4*pi/3)];
@@ -30,7 +30,7 @@ rewards_total = sum(rewards,1)/size(X,2);
 disp([mean(rewards_total),std(rewards_total)])
 disp([mean(mean_dur,2),std(mean_dur,0,2),mean(total_dur,2),std(total_dur,0,2)])
 
-% ---------------------Displaying results--------------------------
+%% ---------------------Displaying results--------------------------
 figure
 
 subplot(1,3,1)

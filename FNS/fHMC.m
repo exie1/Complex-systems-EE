@@ -16,10 +16,14 @@ function [X,t] = fHMC(T,a,p,avg)
         fx = 0;
         fy = 0;
         for j = 1:size(p.location,1)
-            pot = (x(1,:)/p.width(j) - p.location(j,1)).^2 + ... 
-                (x(2,:)/p.width(j) - p.location(j,2)).^2 - p.depth(j);
-            gradx = 2*p.depth(j)/p.width(j) * (x(1,:)/p.width(j) - p.location(j,1));
-            grady = 2*p.depth(j)/p.width(j) * (x(2,:)/p.width(j) - p.location(j,2));
+%             pot = (x(1,:)/p.width(j) - p.location(j,1)).^2 + ... 
+%                 (x(2,:)/p.width(j) - p.location(j,2)).^2 - p.depth(j);
+%             gradx = 2*p.depth(j)/p.width(j) * (x(1,:)/p.width(j) - p.location(j,1));
+%             grady = 2*p.depth(j)/p.width(j) * (x(2,:)/p.width(j) - p.location(j,2));
+            pot = p.depth(j)*(((x(1,:) - p.location(j,1)).^2 + ...
+                (x(2,:) - p.location(j,2)).^2)/p.radius2(j) - 1);
+            gradx = (x(1,:)-p.location(j,1))*2*p.depth(j)/p.radius2(j);
+            grady = (x(2,:)-p.location(j,2))*2*p.depth(j)/p.radius2(j);
             fx = fx + gradx.*(pot<=0);
             fy = fy + grady.*(pot<=0);
         end

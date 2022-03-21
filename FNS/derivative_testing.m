@@ -4,19 +4,19 @@ for i = 1:size(x,1)^2
     coords = [coords, [x(i);y(i)]];
 end
 location = [-5,0;5,0];
-width = [1,1];
+radius = [1,1];
 depth = [1,1];
 
 fx = 0;
 fy = 0;
 fn = 0;
-for j = 1:length(width)
+for j = 1:length(radius)
 %     stim = depth(j)*exp(-0.5*((coords(1,:)-location(j,1)).^2+...
 %             (coords(2,:)-location(j,2)).^2)/width(j));
-    stim = (coords(1,:)/width(j) + location(j,1)).^2 + ...
-        (coords(2,:)/width(j) + location(j,2)).^2 - depth(j);
-    fx = fx + stim.*(-(coords(1,:)-location(j,1))/width(j));
-    fy = fy + stim.*(-(coords(2,:)-location(j,2))/width(j));
+    stim = (coords(1,:)/radius(j) + location(j,1)).^2 + ...
+        (coords(2,:)/radius(j) + location(j,2)).^2 - depth(j);
+    fx = fx + stim.*(-(coords(1,:)-location(j,1))/radius(j));
+    fy = fy + stim.*(-(coords(2,:)-location(j,2))/radius(j));
     fn = fn + stim;
 end
 f = [fx;fy]./fn;
@@ -35,7 +35,7 @@ subplot(1,3,3)
 plot3(coords(1,:),coords(2,:),fx./fn)
 title('Normalised?')
 
-sgtitle(['width: ', num2str(width),', depth: ', num2str(depth)])
+sgtitle(['width: ', num2str(radius),', depth: ', num2str(depth)])
 
 
 %% Assigment lol
@@ -50,7 +50,7 @@ B = 1*10^-9;
 
 
 %%
-figure
+
 bounds = 2;
 [x,y] = meshgrid(linspace(-bounds,bounds,50),linspace(-bounds,bounds,50));
 coords = [];
@@ -58,11 +58,23 @@ for i = 1:size(x,1)^2
     coords = [coords, [x(i);y(i)]];
 end
 location = [0;0];
-width = 1;
+radius = 1;
 depth = 2;
-z = (coords(1,:)/width - location(1)).^2 + (coords(2,:)/width - location(2)).^2 - depth;
-zgrad = 2*depth/width * (coords/width - location);
+z = depth*(((coords(1,:) - location(1)).^2 + (coords(2,:) - location(2)).^2)/radius^2 - 1);
+zgrad = sum(2*depth/radius^2 * (coords - location),1);
 
-plot3(coords(1,:),coords(2,:),sum(zgrad,1).*(z<=0),'.','markersize',5)
-title(['width: ', num2str(width),', depth: ', num2str(depth)])
+% plot3(coords(1,:),coords(2,:),sum(zgrad,1).*(z<=0),'.','markersize',5)
+% title(['width: ', num2str(width),', depth: ', num2str(depth)])
+
+z = quadratic_rewards(coords,p);
+figure
+subplot(1,2,1)
+plot3(coords(1,:),coords(2,:),z,'.')
+title('Potential well')
+
+subplot(1,2,2)
+plot3(coords(1,:),coords(2,:),zgrad.*(z<=0))
+title('Gradient of potential')
+
+sgtitle(['width: ', num2str(radius),', depth: ', num2str(depth)])
 
