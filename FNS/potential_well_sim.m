@@ -2,15 +2,15 @@ a = 1.3; % Levy tail exponent
 p.beta = 1; % beta coefficient
 p.gam = 1; % strength of the Levy noise
 p.dt = 1e-3; % integration time step
-T = 1e2; % simulation time
-num_parallel = 20;
+T = 1e4; % simulation time
+num_parallel = 1;
 
 %--------Defining stimuli and running simulation--------------------
 
 
-p.location = [-1,1; 1, -1]*pi/2; 
-p.depth = 1 + zeros(length(p.location),1);
-p.radius2 = 1^2 + zeros(length(p.location),1);
+p.location = [0,0];     %[-1,1; 1, -1]*pi/2; 
+p.depth = 1;% + zeros(length(p.location),1);
+p.radius2 = 2^2;% + zeros(length(p.location),1);
 ths = sqrt(p.radius2);
 
 tic
@@ -26,41 +26,42 @@ disp([mean(mean_dur,2),std(mean_dur,0,2),mean(total_dur,2),std(total_dur,0,2)])
 %% ---------------------Displaying results--------------------------
 figure
 
-
-subplot(1,3,1)
-plot3(X(1,:,1),X(2,:,1),rewards(:,1),'.','markersize',1) 
+subplot(1,2,1)
+coords = makelattice(100);
+plot3(coords(1,:),coords(2,:),quadratic_rewards(coords,p),'.','markersize',1) 
 xlabel('x')
 ylabel('y')
 
-subplot(1,3,2)
-hist3(squeeze(X(:,:,1))',[50,50],'CDataMode','auto','FaceColor','interp')
+subplot(1,2,2)
+% hist3(squeeze(X(:,:,1))',[50,50],'CDataMode','auto','FaceColor','interp')
 % plot3(X(1,:,1),X(2,:,1),rewards(:,1)*1400,'.','markersize',1) 
+histogram2(X(1,:,1),X(2,:,1),'Normalization','probability','FaceColor','flat')
 xlabel('x')
 ylabel('y')
 
-subplot(1,3,3)
-plot(X(1,:,1),X(2,:,1),'.','markersize',1)
-hold on
-viscircles(p.location, ths);
-xlim([-pi,pi])
-ylim([-pi,pi])
-xlabel('x')
-ylabel('y')
+% subplot(1,3,3)
+% plot(X(1,:,1),X(2,:,1),'.','markersize',0.1)
+% hold on
+% viscircles(p.location, ths);
+% xlim([-pi,pi])
+% ylim([-pi,pi])
+% xlabel('x')
+% ylabel('y')
 
 %% Looping business
 
-avgs = 30; % should average more or increase sampling time for more stimuli
-depth_list = linspace(1,10,20).^2;
+avgs = 50; % should average more or increase sampling time for more stimuli
+radius_list = linspace(0.1,2.1,30);
 
-total_times = [];
-mean_times = [];
-for i = 1:length(depth_list)
-    p.depth(1) = depth_list(i);
-    ths = sqrt(p.radius2); 
-    [X,t] = fHMC(T,a,p,avgs);
+total_timesR = [];
+mean_timesR = [];
+for i = 1:length(radius_list)
+    p.radius2 = radius_list(i)^2;
+    ths = radius_list(i); 
+    [X,t] = fHMC(3e2,a,p,avgs);
     [mean_dur,total_dur] = closest_stim(X,p,ths,avgs);
-    total_times = [total_times, mean(total_dur,2)];
-    mean_times = [mean_times, mean(mean_dur,2)];
+    total_timesR = [total_timesR, mean(total_dur,2)];
+    mean_timesR = [mean_timesR, mean(mean_dur,2)];
     disp([mean(mean_dur,2),mean(total_dur,2)])
     disp(i)
 end
@@ -71,12 +72,26 @@ end
 figure 
 hold on
 
-plot(sqrt(depth_list),total_times(1,:))
-plot(sqrt(depth_list),total_times(2,:))
-plot(sqrt(depth_list),sum(total_times,1))
-xlabel('depth of stimuli 1')
-ylabel('total duration in stimuli (s)')
-ylim([0,100])
-title('Total duration in stimuli over 100 s simulation')
-legend('Stimulus 1 (varying depth)', 'Stimulus 2','Sum')
+% plot(sqrt(depth_list),total_times(1,:))
+% plot(sqrt(depth_list),total_times(2,:))
+% plot(sqrt(depth_list),sum(total_times,1))
+% xlabel('depth of stimuli 1')
+% ylabel('total duration in stimuli (s)')
+% ylim([0,100])
+% title('Total duration in stimuli over 100 s simulation')
+% legend('Stimulus 1 (varying depth)', 'Stimulus 2','Sum')
 
+plot(radius_list,total_timesR)
+xlabel('radius of stimulus')
+ylabel('total duration in stimuli')
+title('Total duration in stimuli over 300 * 1e-3 simulation')
+
+%%
+
+function coords = makelattice(n)
+    [x,y] = meshgrid(linspace(-pi,pi,n),linspace(-pi,pi,n));
+    coords = [];
+    for i = 1:size(x,1)^2
+        coords = [coords, [x(i);y(i)]];
+    end
+end

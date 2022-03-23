@@ -60,10 +60,10 @@ B = 1*10^-9;
 coords = [linspace(-2,2,100);zeros(1,100)];
 location = [0;0];
 radius = 1;
-depth = 3;
+depth = 1;
 z = depth*(((coords(1,:) - location(1)).^2 + (coords(2,:) - location(2)).^2)/radius^2 - 1);
 zgrad = sum(2*depth/radius^2 * (coords - location),1).*(z<=0);
-z = z.*(z<=0);
+
 % plot3(coords(1,:),coords(2,:),sum(zgrad,1).*(z<=0),'.','markersize',5)
 % title(['width: ', num2str(width),', depth: ', num2str(depth)])
 
@@ -75,11 +75,10 @@ title('Potential well')
 
 subplot(1,3,2)
 plot3(coords(1,:),coords(2,:),zgrad)
-title('Gradient of potential (analytical)')
+title('Gradient of potential')
 
 subplot(1,3,3)
-plot3(coords(1,1:end-1),coords(2,1:end-1),diff(z)./diff(coords(1,:)))
-title('Gradient of potential (numerical)')
+plot3(coords(1,1:end-1),coords(2,1:end-1),diff(z))
 
 sgtitle(['width: ', num2str(radius),', depth: ', num2str(depth)])
 
