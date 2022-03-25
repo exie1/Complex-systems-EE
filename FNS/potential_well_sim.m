@@ -2,26 +2,31 @@ a = 1.3; % Levy tail exponent
 p.beta = 1; % beta coefficient
 p.gam = 1; % strength of the Levy noise
 p.dt = 1e-3; % integration time step
-T = 1e4; % simulation time
+T = 4e3; % simulation time
 num_parallel = 1;
 
 %--------Defining stimuli and running simulation--------------------
 
+R = pi/2;
+theta = pi/2;   % for triangle stim
+p.location = [R*cos(theta),R*sin(theta); 
+    R*cos(theta+2*pi/3),R*sin(theta+2*pi/3);
+    R*cos(theta+4*pi/3),R*sin(theta+4*pi/3)];
+p.depth = [1,1,1];
+p.radius2 = [1,1,1].^2;
 
-p.location = [0,0];     %[-1,1; 1, -1]*pi/2; 
-p.depth = 1;% + zeros(length(p.location),1);
-p.radius2 = 2^2;% + zeros(length(p.location),1);
+% p.location = [0,0];     %[-1,1; 1, -1]*pi/2; 
+% p.depth = 1;% + zeros(length(p.location),1);
+% p.radius2 = 2^2;% + zeros(length(p.location),1);
 ths = sqrt(p.radius2);
 
 tic
 [X,t] = fHMC(T,a,p,num_parallel);
 [mean_dur,total_dur] = closest_stim(X,p,ths,num_parallel);
-rewards = quadratic_rewards(X,p);
 toc
 
-rewards_total = sum(rewards,1)/size(X,2);
-disp([mean(rewards_total),std(rewards_total)])
 disp([mean(mean_dur,2),std(mean_dur,0,2),mean(total_dur,2),std(total_dur,0,2)])
+disp(mean(total_dur,2)/T)
 
 %% ---------------------Displaying results--------------------------
 figure
