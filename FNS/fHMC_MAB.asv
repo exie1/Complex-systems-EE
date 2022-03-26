@@ -15,7 +15,6 @@ function [X,t,history] = fHMC_MAB(T,a,p,window,avg)
 
     ca = gamma(a-1)/(gamma(a/2).^2);    % fractional derivative approx
 
-    expectation = zeros(1,length(p.rewardMu));
     history = zeros(2,round(n/window)); 
     X = zeros(m,n,avg);
     counter = 1;
@@ -52,7 +51,7 @@ function [X,t,history] = fHMC_MAB(T,a,p,window,avg)
         history(2,counter) = p.rewardSig(chosen)*randn()+p.rewardMu(chosen);
         counter = counter + 1;
         
-        
+        expectation = zeros(1,length(p.rewardMu));
         for opt = 1:size(p.rewardMu)
             rewards = history(2,:) .* (history(1,:) == opt);
             expectation(opt) = mean(rewards(rewards~=0));

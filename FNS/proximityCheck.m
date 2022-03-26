@@ -7,5 +7,6 @@ function option = proximityCheck(points,centres)
         centre = centres(i,:)';
         prox(i,:) = vecnorm(points-centre);
     end
-    [~,option] = min(prox);
+    [~,closest] = min(prox);
+    option = mode(closest);
 end

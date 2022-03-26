@@ -2,33 +2,31 @@ a = 1.3; % Levy tail exponent
 p.beta = 1; % beta coefficient
 p.gam = 1; % strength of the Levy noise
 p.dt = 1e-3; % integration time step
-T = 1e4; % simulation time
+T = 1e2; % simulation time
 num_parallel = 1;
 
 %--------Defining stimuli and running simulation--------------------
 
-R = pi/2;
-theta = pi/2;   % for triangle stim
-p.location = [R*cos(theta),R*sin(theta); 
-    R*cos(theta+2*pi/3),R*sin(theta+2*pi/3);
-    R*cos(theta+4*pi/3),R*sin(theta+4*pi/3)];
-p.depth = [1,1,1];
-p.radius2 = [1,1,1].^2;
+% R = pi/2;
+% theta = pi/2;   % for triangle stim
+% p.location = [R*cos(theta),R*sin(theta); 
+%     R*cos(theta+2*pi/3),R*sin(theta+2*pi/3);
+%     R*cos(theta+4*pi/3),R*sin(theta+4*pi/3)];
+% p.depth = [1,1,1];
+% p.radius2 = [1,1,1].^2;
 
-% p.location = [0,0];     %[-1,1; 1, -1]*pi/2; 
-% p.depth = 1;% + zeros(length(p.location),1);
-% p.radius2 = 2^2;% + zeros(length(p.location),1);
+p.location = [-1,-1;1,1];     %[-1,1; 1, -1]*pi/2; 
+p.depth = [1,1];% + zeros(length(p.location),1);
+p.radius2 = [1,1].^2;% + zeros(length(p.location),1);
 ths = sqrt(p.radius2);
 
 tic
 [X,t] = fHMC(T,a,p,num_parallel);
 [mean_dur,total_dur] = closest_stim(X,p,ths,num_parallel);
-rewards = quadratic_rewards(X,p);
 toc
 
-rewards_total = sum(rewards,1)/size(X,2);
-disp([mean(rewards_total),std(rewards_total)])
 disp([mean(mean_dur,2),std(mean_dur,0,2),mean(total_dur,2),std(total_dur,0,2)])
+disp(mean(total_dur,2)/T)
 
 %% ---------------------Displaying results--------------------------
 figure
@@ -57,18 +55,18 @@ ylabel('y')
 
 %% Looping business
 
-avgs = 50; % should average more or increase sampling time for more stimuli
-radius_list = linspace(0.1,2.1,30);
+avgs = 30; % should average more or increase sampling time for more stimuli
+depth_list = logspace(-1,1,30);
 
-total_timesR = [];
-mean_timesR = [];
-for i = 1:length(radius_list)
-    p.radius2 = radius_list(i)^2;
-    ths = radius_list(i); 
-    [X,t] = fHMC(3e2,a,p,avgs);
+total_timesD = [];
+mean_timesD = [];
+for i = 1:length(depth_list)
+    p.depth(1) = depth_list(i);
+    ths(1) = depth_list(i); 
+    [X,t] = fHMC(1e3,a,p,avgs);
     [mean_dur,total_dur] = closest_stim(X,p,ths,avgs);
-    total_timesR = [total_timesR, mean(total_dur,2)];
-    mean_timesR = [mean_timesR, mean(mean_dur,2)];
+    total_timesD = [total_timesD, mean(total_dur,2)];
+    mean_timesD = [mean_timesD, mean(mean_dur,2)];
     disp([mean(mean_dur,2),mean(total_dur,2)])
     disp(i)
 end
@@ -88,10 +86,13 @@ hold on
 % title('Total duration in stimuli over 100 s simulation')
 % legend('Stimulus 1 (varying depth)', 'Stimulus 2','Sum')
 
-plot(radius_list,total_timesR)
+plot(depth_list,total_timesD(1,:))
+plot(depth_list,total_timesD(2,:))
+plot(depth_list,sum(total_timesD,1))
 xlabel('radius of stimulus')
 ylabel('total duration in stimuli')
-title('Total duration in stimuli over 300 * 1e-3 simulation')
+title('Total duration in stimuli over 1000 * 1e-3 simulation')
+legend('Stimulus 1 (varying radius)', 'Stimulus 2','Sum')
 
 %%
 
