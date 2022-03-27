@@ -1,4 +1,4 @@
-function [X,t,history,history_rad] = fHMC_MAB(T,a,p,window,avg)
+function [X,t,history_rewards,history_choices,history_rad] = fHMC_MAB(T,a,p,window,avg)
     % Same fHMC algorithm, but optimised for multi-armed bandit
     % simulations. Change width for bottom-up attention, change depth for
     % top-down attention, change Levy noise for random exploration.
@@ -18,15 +18,20 @@ function [X,t,history,history_rad] = fHMC_MAB(T,a,p,window,avg)
     ca = gamma(a-1)/(gamma(a/2).^2);    % fractional derivative approx
 
     % Initialising recording arrays
-    expectation = zeros(1,numWells);
-    history = zeros(2,round(n/window)+numWells); 
-    history_rad = zeros(numWells,round(n/window));
+    expectation = zeros(avg,numWells);
+    history_rewards = zeros(avg,round(n/window)+numWells);  % avg x MAB
+    history_choices = zeros(avg,round(n/window)+numWells);  % avg x MAB
+    history_rad = zeros(avg,numWells,round(n/window));
     X = zeros(m,n,avg);
     
     % Sampling each well and adjusting radius
-    history(:,1:numWells) = [1:numWells; p.rewardSig.*randn(1,3)+p.rewardMu];
-    weights = softmax1(history(2,1:numWells));
-    p.radius2 = (max_rad*weights).^2;
+    for av = 1:avg
+        history_choices(av,1:numWells) = 1:numWells;
+        history_rewards(av,1:numWells) = p.rewardSig.*randn(1,3)+p.rewardMu;
+    end
+    weights = softmax1(history_rewards(:,1:numWells));
+    p.radius2 = (max_rad*weights').^2;   % radius: numWells x avg
+    history_rad(:,:,1) = p.radius2';
     disp(sqrt(p.radius2))
     
     counter = 1+numWells;
@@ -53,17 +58,17 @@ function [X,t,history,history_rad] = fHMC_MAB(T,a,p,window,avg)
         
         % Choosing which option to sample from (+ sampling & recording)
         chosen = proximityCheck(X(:,i:w,:),p.location);
-        history(1,counter) = chosen;
-        history(2,counter) = p.rewardSig(chosen)*randn()+p.rewardMu(chosen);
-        history_rad(:,counter) = p.radius2';
+        history_choices(:,counter) = chosen;
+        history_rewards(:,counter) = p.rewardSig(chosen)*randn(avg,1)+p.rewardMu(chosen);
+        history_rad(:,:,counter) = p.radius2';
         
         % Updating well parameters according to sampled history
         for opt = 1:length(p.rewardMu)
-            rewards = history(2,1:counter) .* (history(1,1:counter) == opt);
-            expectation(opt) = mean(rewards(rewards~=0));
+            rewards = history_rewards(:,1:counter) .* (history_choices(:,1:counter) == opt);
+            expectation(:,opt) = mean(rewards(rewards~=0),1);
         end
         weights = softmax1(expectation);
-        p.radius2 = (max_rad*weights).^2;
+        p.radius2 = (max_rad*weights').^2;
         counter = counter + 1;
     end
 end
@@ -72,7 +77,7 @@ end
 
 function weights = softmax1(vec)
     % Softmax function
-    weights = exp(vec)/sum(exp(vec));
+    weights = exp(vec)./sum(exp(vec),2);
 end
 
 function f = getPotential(x,p)
@@ -81,9 +86,9 @@ function f = getPotential(x,p)
     fy = 0;     
     for j = 1:size(p.location,1)
         pot = p.depth(j)*(((x(1,:) - p.location(j,1)).^2 + ...
-            (x(2,:) - p.location(j,2)).^2)/p.radius2(j) - 1);
-        gradx = (x(1,:)-p.location(j,1))*2*p.depth(j)/p.radius2(j);
-        grady = (x(2,:)-p.location(j,2))*2*p.depth(j)/p.radius2(j);
+            (x(2,:) - p.location(j,2)).^2)/p.radius2(j,:) - 1);
+        gradx = (x(1,:)-p.location(j,1))*2*p.depth(j)./p.radius2(j,:);
+        grady = (x(2,:)-p.location(j,2))*2*p.depth(j)./p.radius2(j,:);
         fx = fx + gradx.*(pot<=0);
         fy = fy + grady.*(pot<=0);
     end

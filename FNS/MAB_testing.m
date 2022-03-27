@@ -5,7 +5,7 @@ p.dt = 1e-3; % integration time step
 T = 1e3; % simulation time
 MAB_steps = 500;
 window = T/p.dt/MAB_steps;
-num_parallel = 1;
+num_parallel = 30;
 
 %--------Defining stimuli and running simulation--------------------
 
@@ -22,30 +22,32 @@ p.rewardSig = [3,4,5]/3;
 
 
 tic
-[X,t,history,history_rad] = fHMC_MAB(T,a,p,window,num_parallel);
+[X,t,history_rewards,history_choices,history_rad] = fHMC_MAB(T,a,p,window,num_parallel);
 toc
-
-optimal = max(p.rewardMu)*MAB_steps;
-regret = 1 - (sum(history(2,:))/optimal);
-[cnt_unique, uniq] = hist(history(1,:),unique(history(1,:)));
-disp('Number of times each option is sampled + overall regret')
-disp([cnt_unique,regret])
 %%
+optimal = max(p.rewardMu)*MAB_steps;
+regret = mean(1 - (sum(history_rewards,2)/optimal));
+[cnt_unique, uniq] = hist(history_choices',unique(history_choices));
+disp('Mean number of times each option is sampled + mean regret')
+disp([mean(cnt_unique,2)',regret])
+%%
+trial = 2;
+
 figure
 subplot(2,3,1)
-plot(history(1,:))
+plot(history_choices(trial,:))
 xlabel('Step')
 ylabel('Chosen option')
 
 subplot(2,3,2)
-histogram2(X(1,:,1),X(2,:,1),'Normalization','probability','FaceColor','flat')
+histogram2(X(1,:,trial),X(2,:,trial),'Normalization','probability','FaceColor','flat')
 xlabel('x')
 ylabel('y')
 
 subplot(2,3,3)
 for plt = 1:3
     hold on
-    plot(history_rad(plt,:))
+    plot(squeeze(history_rad(trial,plt,:)))
 end
 xlabel('MAB step')
 ylabel('Radius')
@@ -54,7 +56,7 @@ pdf_range = linspace(min(history(2,:)),max(history(2,:)),200);
 disp('Mean and std of simulated payoff distribution')
 for plt = 1:3
     subplot(2,3,3+plt)
-    oneOpt = history(2,:).*(history(1,:) == plt);  % Payoffs from option __ 
+    oneOpt = history_rewards(trial,:).*(history_choices(trial,:) == plt);  % Payoffs from option __ 
     hold on
     histogram(oneOpt(oneOpt~=0),'Normalization','probability')
     plot(pdf_range,normpdf(pdf_range,p.rewardMu(plt),p.rewardSig(plt)),'lineWidth',2)
