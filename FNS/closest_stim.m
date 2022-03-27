@@ -2,8 +2,8 @@ function [mean_duration,total_duration] = closest_stim(X,p,ths,avg)
     % Find mean duration the sampling point stays in a stim
     mean_duration = zeros(size(p.location,1),avg);
     total_duration = zeros(size(p.location,1),avg);
-    for j = 1:avg                       % Loop over averages
-        for i = 1:size(p.location,1)    % Loop over wells
+    for j = 1:avg
+        for i = 1:size(p.location,1)
             loc = p.location(i,:);
             dist_stim = sqrt((X(1,:,j)-loc(1)).^2 + (X(2,:,j)-loc(2)).^2);
             in_stim = [0,(dist_stim<ths(i)),0];
