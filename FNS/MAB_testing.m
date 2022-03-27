@@ -16,12 +16,12 @@ p.location = [R*cos(theta),R*sin(theta);
     R*cos(theta+4*pi/3),R*sin(theta+4*pi/3)];
 p.depth = [1,1,1];
 
-p.radius2 = [1,1,1].^2;     % automatically rescaled later
-p.rewardMu = [3,4,5];       
-p.rewardSig = [3,4,5]/3;
-
+p.radius2 = [1,1,1].^2;
+p.rewardMu = [3,4,5];       % should initialise this as sampled values
+p.rewardSig = [5,4,3]/2;
 
 tic
+<<<<<<< HEAD
 [X,t,history_rewards,history_choices,history_rad] = fHMC_MAB(T,a,p,window,num_parallel);
 toc
 %%
@@ -30,10 +30,17 @@ regret = mean(1 - (sum(history_rewards,2)/optimal));
 [cnt_unique, uniq] = hist(history_choices',unique(history_choices));
 disp('Mean number of times each option is sampled + mean regret')
 disp([mean(cnt_unique,2)',regret])
+=======
+[X,t,history] = fHMC_MAB(T,a,p,window,num_parallel);
+toc
+
+regret = 1 - (sum(history(2,:))/max(p.rewardMu)*MAB_steps);
+>>>>>>> parent of 146b0c1 (Fixed MAB simulation)
 %%
 trial = 2;
 
 figure
+<<<<<<< HEAD
 subplot(2,3,1)
 plot(history_choices(trial,:))
 xlabel('Step')
@@ -67,16 +74,21 @@ end
 
 
 %% Find total duration?
+=======
+subplot(1,2,1)
+plot(history(1,:))
+xlabel('Step')
+ylabel('Chosen option')
 
-numTries = 1e5;
-pureEE_lst = zeros(2,numTries);
-for testing = 1:numTries
-    reward_i = p.rewardSig.*randn(1,3)+p.rewardMu;
-    [~,chosen1] = max(reward_i);
-    [~,chosen2] = max(rand(1,3));
-    pureEE_lst(1,testing) = p.rewardMu(chosen1)*MAB_steps;
-    pureEE_lst(2,testing) = p.rewardMu(chosen2)*MAB_steps;
-end
-disp("Pure exploitation and pure exploration mean regret:")
-disp([1 - (mean(pureEE_lst(1,:)))/optimal, ...
-    1 - (mean(pureEE_lst(2,:)))/optimal])
+subplot(1,2,2)
+histogram2(X(1,:,1),X(2,:,1),'Normalization','probability','FaceColor','flat')
+xlabel('x')
+ylabel('y')
+
+%%
+>>>>>>> parent of 146b0c1 (Fixed MAB simulation)
+
+figure
+oneOpt = history(2,:) .* (history(1,:) == 3);
+histogram(oneOpt)
+(5*500 - sum(history(2,:)))/(5*500)
