@@ -1,4 +1,4 @@
-function [X,t,history,history_rad] = fHMC_MAB(T,a,p,window,avg)
+function [X,t,history,history_rad] = fHMC_MAB(T,a,p,window)
     % Same fHMC algorithm, but optimised for multi-armed bandit
     % simulations. Change width for bottom-up attention, change depth for
     % top-down attention, change Levy noise for random exploration.
@@ -13,8 +13,8 @@ function [X,t,history,history_rad] = fHMC_MAB(T,a,p,window,avg)
     numWells = length(p.rewardMu);
     
     
-    x = zeros(2,avg)+[1e-10;0]; % initial condition for each parallel sim
-    v = zeros(2,avg)+[1;0];     % ^ but velocity
+    x = zeros(2,1)+[1e-10;0]; % initial condition for each parallel sim
+    v = zeros(2,1)+[1;0];     % ^ but velocity
 
     ca = gamma(a-1)/(gamma(a/2).^2);    % fractional derivative approx
 
@@ -22,7 +22,7 @@ function [X,t,history,history_rad] = fHMC_MAB(T,a,p,window,avg)
     expectation = zeros(1,numWells);
     history = zeros(2,round(n/window)+numWells); 
     history_rad = zeros(numWells,round(n/window));
-    X = zeros(m,n,avg);
+    X = zeros(m,n);
     
     % Sampling each well and adjusting radius
     history(:,1:numWells) = [1:numWells; p.rewardSig.*randn(1,3)+p.rewardMu];
@@ -35,9 +35,9 @@ function [X,t,history,history_rad] = fHMC_MAB(T,a,p,window,avg)
         for w = i:i+window-1
             f = getPotential(x,p);
 
-            dL = stblrnd(a,0,p.gam,0,[2,avg]); 
+            dL = stblrnd(a,0,p.gam,0,[2,1]); 
             r = sqrt(sum(dL.*dL,1)); %step length
-            th = rand(1,avg)*2*pi;
+            th = rand()*2*pi;
             g = r.*[cos(th);sin(th)];
 
             % Stochastic fractional Hamiltonian Monte Carlo
@@ -47,9 +47,9 @@ function [X,t,history,history_rad] = fHMC_MAB(T,a,p,window,avg)
             v = vnew;
 
             x = wrapToPi(x); % apply periodic boundary to avoid run-away
-            X(:,w,:) = x;    % record position
+            X(:,w) = x;    % record position
         end
-        chosen = proximityCheck(X(:,i:w,:),p.location);
+        chosen = proximityCheck(X(:,i:w),p.location);
         history(1,counter) = chosen;
         history(2,counter) = p.rewardSig(chosen)*randn()+p.rewardMu(chosen);
         history_rad(:,counter) = p.radius2';
@@ -85,3 +85,5 @@ function f = getPotential(x,p)
     end
     f = -[fx;fy];
 end
+
+

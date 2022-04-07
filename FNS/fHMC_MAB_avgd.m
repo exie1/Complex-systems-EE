@@ -8,13 +8,12 @@ function [X,t,history_rewards,history_choices] = fHMC_MAB_avgd(T,a,p,window,avg)
     dta = dt.^(1/a); % fractional integration step
     n = floor(T/dt); % number of samples
     t = (0:n-1)*dt;  % time
-%     max_rad = vecnorm(p.location(1,:)-p.location(2,:))/2;
     max_rad = pi;
     numWells = length(p.rewardMu);
     
     
     x = zeros(avg,2)+[1e-10,0]; % initial condition for each parallel sim
-    v = zeros(avg,2)+[0,1];     % ^ but velocity
+    v = zeros(avg,2)+[1,0];     % ^ but velocity
 
     ca = gamma(a-1)/(gamma(a/2).^2);    % fractional derivative approx
 
@@ -29,10 +28,10 @@ function [X,t,history_rewards,history_choices] = fHMC_MAB_avgd(T,a,p,window,avg)
         history_choices(trial,1:numWells) = 1:numWells;
         history_rewards(trial,1:numWells) = p.rewardSig.*randn(1,numWells)+p.rewardMu;
     end
-    weights = softmax1(history_rewards(:,1:numWells));
+    weights = softmax1(history_rewards(:,1:numWells),p.tau);
     p.radius2 = (max_rad*weights).^2;
 %     p.depth = sqrt(p.radius2); % sqrt? + don't initialise?
-    disp(weights)
+    disp(sqrt(p.radius2))
     
     counter = 1+numWells;
     for i = 1:window:n      % num steps separated into time windows   
@@ -56,22 +55,22 @@ function [X,t,history_rewards,history_choices] = fHMC_MAB_avgd(T,a,p,window,avg)
         chosen = proximityCheck(X(:,i:w,:),p.location)';
         history_choices(:,counter) = chosen;
         history_rewards(:,counter) = p.rewardSig(chosen)'.*randn(avg,1) + p.rewardMu(chosen)';
-                
+        
         % Updating well parameters according to sampled history
         for opt = 1:length(p.rewardMu)
             rewards = history_rewards(:,1:counter).*(history_choices(:,1:counter)==opt);
-            expectation(:,opt) = mean(rewards(rewards~=0),1);
+            expectation(:,opt) = mean(rewards.*(rewards~=0),2);
         end
-        weights = softmax1(expectation);
+        weights = softmax1(expectation,p.tau);
         p.radius2 = (max_rad*weights).^2;
         p.depth = p.radius2;
         counter = counter + 1;
     end
 end
 
-function weights = softmax1(vec)
+function weights = softmax1(vec,tau)
     % Rowwise softmax function
-    weights = exp(vec)./sum(exp(vec),2);
+    weights = exp(vec/tau)./sum(exp(vec/tau),2);
 end
 
 function f = getPotential(x,p)
@@ -80,7 +79,7 @@ function f = getPotential(x,p)
     fy = 0;     
     for j = 1:size(p.location,1)
         pot = p.depth(:,j).*(((x(:,1) - p.location(j,1)).^2 + ...
-            (x(:,1) - p.location(j,2)).^2)./p.radius2(:,j) - 1);
+            (x(:,2) - p.location(j,2)).^2)./p.radius2(:,j) - 1);
         gradx = (x(:,1)-p.location(j,1))*2.*p.depth(:,j)./p.radius2(:,j);
         grady = (x(:,2)-p.location(j,2))*2.*p.depth(:,j)./p.radius2(:,j);
         fx = fx + gradx.*(pot<=0);
@@ -88,3 +87,4 @@ function f = getPotential(x,p)
     end
     f = -[fx,fy];
 end
+
