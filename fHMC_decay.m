@@ -1,0 +1,2 @@
+% Bernoulli bandits: diminishing returns
+

@@ -17,6 +17,7 @@ p.location = [-1,1;1,1;-1,-1;1,-1]*pi/2;
 p.depth = [1,1,1,1];
 p.sigma2 = [1,1,1,1]*0.32;
 p.radius2 = [1,1,1,1].^2;
+p.maxVal = 10;
 
 p.rewardMu = payoffs(1,:);
 p.rewardSig = zeros(1,4) + 4;
@@ -59,4 +60,16 @@ ylabel('Radius')
 legend('Well 1', 'Well 2', 'Well 3', 'Well 4')
 xlim([0,300])
 title('Radius history')
+
+%% Looping stuff
+maxval_list = logspace(0,2,20);
+res_list = [];
+for n = 1:length(maxval_list)
+    p.maxVal = maxval_list(n);
+    p.depth = [1,1,1,1];
+    [X,t,history,history_rad] = fHMC_dynMABGaussian(p,payoffs,MAB_steps);
+    regret = 1 - (sum(history(2,:))/optimal);
+    res_list = [res_list, regret];
+end
+
 

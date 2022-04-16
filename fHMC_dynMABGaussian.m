@@ -9,7 +9,7 @@ function [X,t,history,history_rad] = fHMC_dynMABGaussian(p,payoffs,MAB_steps)
     n = floor(p.T/dt); % number of samples
     t = (0:n-1)*dt;  % time
     window = p.T/p.dt/MAB_steps;
-    maxVal = 10;
+    maxVal = p.maxVal;
     numWells = length(p.rewardMu);
     
     
