@@ -17,11 +17,12 @@ p.location = [-1,1;1,1;-1,-1;1,-1]*pi/2;
 p.depth = [1,1,1,1];
 p.sigma2 = [1,1,1,1]*0.32;
 p.radius2 = [1,1,1,1].^2;
-p.maxVal = 10;
+p.maxVal_d = 10;
+% p.maxVal_s = 0.3;
 
 p.rewardMu = payoffs(1,:);
 p.rewardSig = zeros(1,4) + 4;
-p.temp = 1;
+p.temp = 2;
 
 tic
 [X,t,history,history_rad] = fHMC_dynMABGaussian(p,payoffs,MAB_steps);
@@ -34,7 +35,7 @@ disp('Proportion of samples + overall regret')
 disp([cnt_unique/sum(cnt_unique),regret])
 
 
-%% Plotting
+% Plotting
 figure
 subplot(1,3,1)
 plot(history(1,:))
@@ -53,20 +54,21 @@ title('Sampled distribution')
 subplot(1,3,3)
 for plt = 1:length(p.rewardMu)
     hold on
-    plot(sqrt(history_rad(plt,:)))
+    plot(history_rad(plt,:))
 end
 xlabel('MAB step')
-ylabel('Radius')
+ylabel('Depth')
 legend('Well 1', 'Well 2', 'Well 3', 'Well 4')
 xlim([0,300])
 title('Radius history')
 
 %% Looping stuff
-maxval_list = logspace(0,2,20);
+p.maxVal_d = 10;
+maxval_list = linspace(0.5,2.5,20);
 res_list = [];
 for n = 1:length(maxval_list)
-    p.maxVal = maxval_list(n);
-    p.depth = [1,1,1,1];
+    p.temp = maxval_list(n);
+    p.sigma2 = [1,1,1,1]*0.3;
     [X,t,history,history_rad] = fHMC_dynMABGaussian(p,payoffs,MAB_steps);
     regret = 1 - (sum(history(2,:))/optimal);
     res_list = [res_list, regret];

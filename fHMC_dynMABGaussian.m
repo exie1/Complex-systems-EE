@@ -9,7 +9,8 @@ function [X,t,history,history_rad] = fHMC_dynMABGaussian(p,payoffs,MAB_steps)
     n = floor(p.T/dt); % number of samples
     t = (0:n-1)*dt;  % time
     window = p.T/p.dt/MAB_steps;
-    maxVal = p.maxVal;
+    maxVal_d = p.maxVal_d;
+    maxVal_s = p.maxVal_s;
     numWells = length(p.rewardMu);
     
     
@@ -27,7 +28,8 @@ function [X,t,history,history_rad] = fHMC_dynMABGaussian(p,payoffs,MAB_steps)
     % sampling once + adjusting parameters
     history(:,1:numWells) = [1:numWells; p.rewardSig.*randn(1,numWells)+p.rewardMu];
     weights = softmax1(history(2,1:numWells),p.temp);
-    p.depth = maxVal*weights;
+    p.depth = maxVal_d*weights;
+%     p.sigma2 = (maxVal_s*weights)*2;
     disp(weights)
     
     counter = 1+numWells;
@@ -60,7 +62,8 @@ function [X,t,history,history_rad] = fHMC_dynMABGaussian(p,payoffs,MAB_steps)
             expectation(opt) = mean(rewards(rewards~=0));
         end
         weights = softmax1(expectation,p.temp);
-        p.depth = maxVal*weights;
+        p.depth = maxVal_d*weights;
+%         p.sigma2 = (maxVal_s*weights)*2;
         p.rewardMu = payoffs(counter-4,:);
         counter = counter + 1;
     end
