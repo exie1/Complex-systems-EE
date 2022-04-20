@@ -10,7 +10,7 @@ function [X,t,history,history_rad] = fHMC_dynMABGaussian(p,payoffs,MAB_steps)
     t = (0:n-1)*dt;  % time
     window = p.T/p.dt/MAB_steps;
     maxVal_d = p.maxVal_d;
-    maxVal_s = p.maxVal_s;
+%     maxVal_s = p.maxVal_s;
     numWells = length(p.rewardMu);
     
     
@@ -33,6 +33,7 @@ function [X,t,history,history_rad] = fHMC_dynMABGaussian(p,payoffs,MAB_steps)
     disp(weights)
     
     counter = 1+numWells;
+    exp_hist = history(2,:);
     for i = 1:window:n      % num steps separated into time windows   
         for w = i:i+window-1
             f = getPotential(x,p);
@@ -54,13 +55,15 @@ function [X,t,history,history_rad] = fHMC_dynMABGaussian(p,payoffs,MAB_steps)
         chosen = proximityCheck(X(:,i:w),p.location);
         history(1,counter) = chosen;
         history(2,counter) = p.rewardSig(chosen)*randn()+p.rewardMu(chosen);
+        exp_hist(counter) = history(2,counter);
         history_rad(:,counter) = p.depth';
         
         % Updating well parameters according to sampled history
         for opt = 1:length(p.rewardMu)
-            rewards = history(2,1:counter) .* (history(1,1:counter) == opt);
+            rewards = exp_hist(1:counter) .* (history(1,1:counter) == opt);
             expectation(opt) = mean(rewards(rewards~=0));
         end
+        exp_hist = exp_hist*0.99;
         weights = softmax1(expectation,p.temp);
         p.depth = maxVal_d*weights;
 %         p.sigma2 = (maxVal_s*weights)*2;
