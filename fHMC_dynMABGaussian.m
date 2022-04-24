@@ -10,8 +10,10 @@ function [X,t,history,history_rad] = fHMC_dynMABGaussian(p,payoffs,MAB_steps)
     t = (0:n-1)*dt;  % time
     window = p.T/p.dt/MAB_steps;
     maxVal_d = p.maxVal_d;
-%     maxVal_s = p.maxVal_s;
     numWells = length(p.rewardMu);
+    p.sigma2 = [1,1,1,1]*0.32;
+    p.depth = [1,1,1,1];
+
     
     
     x = zeros(2,1); % initial condition for each parallel sim
@@ -29,8 +31,6 @@ function [X,t,history,history_rad] = fHMC_dynMABGaussian(p,payoffs,MAB_steps)
     history(:,1:numWells) = [1:numWells; p.rewardSig.*randn(1,numWells)+p.rewardMu];
     weights = softmax1(history(2,1:numWells),p.temp);
     p.depth = maxVal_d*weights;
-%     p.sigma2 = (maxVal_s*weights)*2;
-    disp(weights)
     
     counter = 1+numWells;
     exp_hist = history(2,:);
@@ -63,12 +63,12 @@ function [X,t,history,history_rad] = fHMC_dynMABGaussian(p,payoffs,MAB_steps)
             rewards = exp_hist(1:counter) .* (history(1,1:counter) == opt);
             expectation(opt) = mean(rewards(rewards~=0));
         end
-        exp_hist = exp_hist*0.99;
+%         exp_hist = exp_hist*p.l;    % Recency bias
+        exp_hist(history(1,1:counter)==chosen) = exp_hist(history(1,1:counter)==chosen)*p.l;
         weights = softmax1(expectation,p.temp);
         p.depth = maxVal_d*weights;
-%         p.sigma2 = (maxVal_s*weights)*2;
         p.rewardMu = payoffs(counter-4,:);
-        counter = counter + 1;
+        counter = counter + 1;  
     end
 end
 
