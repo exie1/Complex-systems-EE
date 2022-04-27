@@ -11,9 +11,6 @@ function [X,t,history,history_rad] = fHMC_dynMABGaussian(p,payoffs,MAB_steps)
     window = p.T/p.dt/MAB_steps;
     maxVal_d = p.maxVal_d;
     numWells = length(p.rewardMu);
-    p.sigma2 = [1,1,1,1]*0.32;
-    p.depth = [1,1,1,1];
-
     
     
     x = zeros(2,1); % initial condition for each parallel sim
