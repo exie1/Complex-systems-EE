@@ -9,7 +9,8 @@ function [X,t,history,history_rad] = fHMC_dynMABGaussian(p,payoffs,MAB_steps)
     n = floor(p.T/dt); % number of samples
     t = (0:n-1)*dt;  % time
     window = p.T/p.dt/MAB_steps;
-    maxVal_d = p.maxVal_d;
+    maxVal_s = p.maxVal_s;
+    
     numWells = length(p.rewardMu);
     
     
@@ -22,15 +23,17 @@ function [X,t,history,history_rad] = fHMC_dynMABGaussian(p,payoffs,MAB_steps)
     expectation = zeros(1,numWells);
     history = zeros(2,round(n/window)+numWells); 
     history_rad = zeros(numWells,round(n/window));
+%     history_dep = zeros(numWells,round(n/window));
     X = zeros(m,n);
     
     % sampling once + adjusting parameters
     history(:,1:numWells) = [1:numWells; p.rewardSig.*randn(1,numWells)+p.rewardMu];
     weights = softmax1(history(2,1:numWells),p.temp);
-    p.depth = maxVal_d*weights;
+    p.depth = maxVal_s*weights;
     
-    counter = 1+numWells;
-    exp_hist = history(2,:);
+    counter = 1+numWells;               % MAB timestep
+    sample_count = zeros(1,numWells);   % how many times has opt been sampled
+    exp_hist = history(2,:);            % Discounted payoff history
     for i = 1:window:n      % num steps separated into time windows   
         for w = i:i+window-1
             f = getPotential(x,p);
@@ -49,22 +52,32 @@ function [X,t,history,history_rad] = fHMC_dynMABGaussian(p,payoffs,MAB_steps)
             x = wrapToPi(x); % apply periodic boundary to avoid run-away
             X(:,w) = x;    % record position
         end
+        % Choosing well and sampling from that option + updating payoff history
         chosen = proximityCheck(X(:,i:w),p.location);
         history(1,counter) = chosen;
         history(2,counter) = p.rewardSig(chosen)*randn()+p.rewardMu(chosen);
         exp_hist(counter) = history(2,counter);
         history_rad(:,counter) = p.depth';
+%         history_dep(:,counter) = p.depth';
+        
+        % Multiplying in discount factor 
+        exp_hist(history(1,1:counter)==chosen) = exp_hist(history(1,1:counter)==chosen)*p.l;
+        
         
         % Updating well parameters according to sampled history
         for opt = 1:length(p.rewardMu)
-            rewards = exp_hist(1:counter) .* (history(1,1:counter) == opt);
+            option_vec = (history(1,1:counter) == opt);
+            rewards = exp_hist(1:counter) .* option_vec;
             expectation(opt) = mean(rewards(rewards~=0));
+%             sample_count(opt) = sum(option_vec);
         end
-%         exp_hist = exp_hist*p.l;    % Recency bias
-        exp_hist(history(1,1:counter)==chosen) = exp_hist(history(1,1:counter)==chosen)*p.l;
+%         IB = p.n*sqrt(2*log(counter) ./ sample_count);
+        
+        
         weights = softmax1(expectation,p.temp);
-        p.depth = maxVal_d*weights;
-        p.rewardMu = payoffs(counter-4,:);
+        p.depth = maxVal_s*weights;
+%         p.depth = softmax1(IB,p.T2).^2;
+        p.rewardMu = payoffs(counter-numWells,:);
         counter = counter + 1;  
     end
 end

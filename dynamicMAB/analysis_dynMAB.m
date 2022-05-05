@@ -1,31 +1,34 @@
 %% Problem setup
-payoffs = csvread('payoffs4.csv')';
+payoffs = csvread('payoffs_step2.csv')';
 
 clear p
 
-p.location = [-1,1;1,1;-1,-1;1,-1]*pi/2;
+p.location = [-1,1;1,1;-1,-1;1,-1];
 p.depth = [1,1,1,1];
-p.radius2 = [1,1,1,1].^2;
+% p.radius2 = [1,1,1,1].^2;
+
+% p.location = [-1,0;1,0] * pi/2;
+% p.depth = [1,1];
 p.rewardMu = payoffs(1,:);
 p.rewardSig = zeros(1,4) + 4;
 
 p.dt = 1e-3; % integration time step
 MAB_steps = 300;
-p.maxVal_d = 1; % Value here cancels out in gradient calc
+% p.maxVal_d = 1; % Value here cancels out in gradient calc
 
 
 
 %% --------Hyperparameters + simulating --------------------
 
-p.a = 1.1;      % Levy tail exponent
+p.a = 1.03;      % Levy tail exponent
 p.gam = 1;      % strength of the Levy noise
-p.beta = 0.5;     % momentum term
+p.beta = 1;     % momentum term
 p.sigma2 = 0.7 * [1,1,1,1];
+p.maxVal_s = 0.7;
 
-p.temp = 0.7;     % softmax temperature
-p.l = 0.99;     % recency bias
-p.T = 0.9e2;      % simulation time: integer multiple of MAB_steps pls
-
+p.temp = 3;     % softmax temperature
+p.l = 0.95;       % recency bias
+p.T = 0.6e2;      % simulation time: integer multiple of MAB_steps pls
 
 tic
 [X,t,history,history_rad] = fHMC_dynMABGaussian(p,payoffs,MAB_steps);
@@ -37,12 +40,12 @@ regret = 1 - (sum(history(2,:))/optimal);
 disp('Proportion of samples + overall regret')
 disp([cnt_unique/sum(cnt_unique),regret])
 
-% %% Plotting spatial walk
-% figure
-% plot(X(1,:),X(2,:),'.','markerSize',1)
-% % hist3(X')
-% 
-% axis square
+%% Plotting spatial walk
+figure
+plot(X(1,:),X(2,:),'.','markerSize',1)
+% hist3(X')
+
+axis square
 %% Plotting
 figure
 subplot(3,1,1)
@@ -53,7 +56,7 @@ end
 xlabel('Step')
 ylabel('Mean payoff')
 title('Mean payoff walk')
-legend('Option 1','Option 2','Option 3','Option 4')
+legend('Option 1','Option 2','Option 3','Option 4');
 
 subplot(3,1,2)
 plot(history(1,:),'.-')
@@ -76,7 +79,7 @@ for plt = 1:length(p.rewardMu)
 end
 xlabel('MAB step')
 ylabel('Depth')
-legend('Well 1', 'Well 2', 'Well 3', 'Well 4')
+legend('Well 1', 'Well 2', 'Well 3', 'Well 4');
 xlim([0,300])
 title('Depth history')
 
@@ -85,7 +88,7 @@ res_list = [];
 
 optimal = sum(max(payoffs,[],2));
 tic
-parfor n = 1:444 %length(maxval_list)
+parfor n = 1:100 %length(maxval_list)
     [X,t,history,history_rad] = fHMC_dynMABGaussian(p,payoffs,MAB_steps);
     
     regret = 1 - (sum(history(2,:))/optimal);
@@ -97,7 +100,7 @@ end
 toc
 %%
 figure
-histogram(res_list,20,'Normalization','probability');
+histogram(res_list,30,'Normalization','probability');
 xlabel('Regret')
 ylabel('Probability')
 disp(['Average regret: ', num2str(mean(res_list)),' Std: ', num2str(std(res_list))])
