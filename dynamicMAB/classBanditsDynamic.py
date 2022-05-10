@@ -90,4 +90,4 @@ class Bandits:
                 history[c][i,:] = history[c][i,:] * rec     # Multiply in recent information bias for chosen option
                 history[c][i,t] = scores[i,t]
             history_choices[:,t] = chosen
-        return np.sum(scores,1),history_choices
+        return np.sum(scores,1),history_choices,history

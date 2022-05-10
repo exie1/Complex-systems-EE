@@ -10,6 +10,7 @@ function [X,t,history,history_rad] = fHMC_dynMABGaussian(p,payoffs,MAB_steps)
     t = (0:n-1)*dt;  % time
     window = p.T/p.dt/MAB_steps;
     maxVal_d = p.maxVal_d;
+%     maxVal_s = p.maxVal_s;
     
     numWells = length(p.rewardMu);
     
@@ -30,6 +31,7 @@ function [X,t,history,history_rad] = fHMC_dynMABGaussian(p,payoffs,MAB_steps)
     history(:,1:numWells) = [1:numWells; p.rewardSig.*randn(1,numWells)+p.rewardMu];
     weights = softmax1(history(2,1:numWells),p.temp);
     p.depth = maxVal_d*weights;
+%     p.sigma2 = maxVal_s*weights;
     
     counter = 1+numWells;               % MAB timestep
     sample_count = zeros(1,numWells);   % how many times has opt been sampled
@@ -63,20 +65,18 @@ function [X,t,history,history_rad] = fHMC_dynMABGaussian(p,payoffs,MAB_steps)
         % Multiplying in discount factor 
         exp_hist(history(1,1:counter)==chosen) = exp_hist(history(1,1:counter)==chosen)*p.l;
         
-        
         % Updating well parameters according to sampled history
         for opt = 1:length(p.rewardMu)
             option_vec = (history(1,1:counter) == opt);
             rewards = exp_hist(1:counter) .* option_vec;
             expectation(opt) = mean(rewards(rewards~=0));
-%             sample_count(opt) = sum(option_vec);
+            sample_count(opt) = sum(option_vec);
         end
-%         IB = p.n*sqrt(2*log(counter) ./ sample_count);
+        IB = sqrt(2*log(counter) ./ sample_count);
         
         
-        weights = softmax1(expectation,p.temp);
-        p.depth = maxVal_d*weights+0.00; % Adding a minimum depth
-%         p.depth = softmax1(IB,p.T2).^2;
+        weights = softmax1(p.n*expectation+(1-p.n)*IB,p.temp);
+        p.depth = maxVal_d*weights; 
         p.rewardMu = payoffs(counter-numWells,:);
         counter = counter + 1;  
     end

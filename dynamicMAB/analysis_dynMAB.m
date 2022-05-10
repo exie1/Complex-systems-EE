@@ -4,7 +4,7 @@ payoffs = csvread('payoffs\payoffs_step2.csv')';
 clear p
 
 % p.location = [-1,1;1,1;-1,-1;1,-1]*pi/2;
-R = 1.5;
+R = 2;
 theta = pi/2;   % for triangle stim
 p.location = [R*cos(theta),R*sin(theta); 
     R*cos(theta+2*pi/3),R*sin(theta+2*pi/3);
@@ -26,12 +26,13 @@ MAB_steps = 300;
 p.a = 1.1;      % Levy tail exponent
 p.gam = 1;      % strength of the Levy noise
 p.beta = 1;     % momentum term: amount of acceleration
-p.sigma2 = 0.5 * [1,1,1];
-p.maxVal_d = 1;
+p.sigma2 = 0.4 * [1,1,1];
+p.maxVal_d = 99;
 
-p.temp = 3;     % softmax temperature
-p.l = 0.99;       % recency bias
-p.T = 1.8e2;      % simulation time: integer multiple of MAB_steps pls
+p.temp = 1.5;     % softmax temperature
+p.l = 0.98;       % recency bias
+p.T = 3e2;      % simulation time: integer multiple of MAB_steps pls
+p.n = 0.9;        % Amount of exploitation - directed exploration
 
 tic
 [X,t,history,history_rad] = fHMC_dynMABGaussian(p,payoffs,MAB_steps);
@@ -45,10 +46,14 @@ disp([cnt_unique/sum(cnt_unique),regret])
 
 %% Plotting spatial walk
 figure
-plot(X(1,:),X(2,:),'.','markerSize',1)
+subplot(1,2,1)
+plot(X(1,:),X(2,:),'.','markerSize',0.01)
+axis square
+subplot(1,2,2)
+plot(t,X(1,:),'lineWidth',0.1)
 % hist3(X')
 
-axis square
+
 %% Plotting
 figure
 subplot(3,1,1)
