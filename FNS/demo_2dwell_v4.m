@@ -1,4 +1,6 @@
-function [X,t,MET]=demo_2dwell_v4()
+[X,t] = demo_2dwell_v4();
+
+function [X,t]=demo_2dwell_v4()
 
 %>>>>> parameters >>>>>>>
 a = 1.2; % Levy tail exponent
@@ -61,20 +63,20 @@ imagesc(H.Values)
 figure('color','w')
 subplot(2,1,1)
 H2 = histogram(X(2,:),100,'normalization','pdf');
-% hold on
-% xx  = H2.BinEdges;
-% p1 = 1/sqrt(2*pi*p.sigma2)*exp(-0.5*xx.^2/p.sigma2);
-% %p2 = exp(-0.5*(x(1)+p.location).^2/p.sigma2 - 0.5*x(2).^2/p.sigma2 );
-% plot(xx,p1,'linewidth',1.5) 
+hold on
+xx  = H2.BinEdges;
+p1 = 1/sqrt(2*pi*p.sigma2)*exp(-0.5*xx.^2/p.sigma2);
+%p2 = exp(-0.5*(x(1)+p.location).^2/p.sigma2 - 0.5*x(2).^2/p.sigma2 );
+plot(xx,p1,'linewidth',1.5) 
 subplot(2,1,2)
 
 subplot(2,1,2)
 H3 = histogram(X(1,:),100,'normalization','pdf');
-% hold on
-% xx  = H3.BinEdges;
-% p2 = 0.5*1/sqrt(2*pi*p.sigma2)*exp(-0.5*(xx+p.location).^2/p.sigma2);
-% p2 = p2 + 0.5*1/sqrt(2*pi*p.sigma2)*exp(-0.5*(xx-p.location).^2/p.sigma2);
-% plot(xx,p2,'linewidth',1.5) 
+hold on
+xx  = H3.BinEdges;
+p2 = 0.5*1/sqrt(2*pi*p.sigma2)*exp(-0.5*(xx+p.location).^2/p.sigma2);
+p2 = p2 + 0.5*1/sqrt(2*pi*p.sigma2)*exp(-0.5*(xx-p.location).^2/p.sigma2);
+plot(xx,p2,'linewidth',1.5) 
 
 end
 
@@ -112,6 +114,7 @@ for i = 1:n
     
     %drift term
     % non-fractional grad of 2d gaussian wells
+    w = 1/2;
     p1 = w*exp(-0.5*(x(1)-p.location).^2/p.sigma2 - 0.5*x(2).^2/p.sigma2 );
     p2 = (1-w)*exp(-0.5*(x(1)+p.location).^2/p.sigma2 - 0.5*x(2).^2/p.sigma2 );
     

@@ -1,20 +1,21 @@
 %% Defining parameters
-a = 1.2; % Levy tail exponent
+a = 1.5; % Levy tail exponent
 p.beta = 1; % beta coefficient
-p.gam = 2; % strength of the Levy noise
+p.gam = 1; % strength of the Levy noise
 p.dt = 1e-3; % integration time step
-T = 1e2; % simulation time
-num_avg = 5;
+T = 1e3; % simulation time
+num_avg = 2;
 
-p.location = [0,0]; %[pi/2,0 ; -pi/2,0 ; 0,pi/2 ; 0,-pi/2];    
-p.sigma2 = 0.3;    %[0.32,0.32,0.32,0.32]; 
-p.depth = 1;        %[1,1,1,1];
+p.location = [-1,0;1,0]; %[pi/2,0 ; -pi/2,0 ; 0,pi/2 ; 0,-pi/2];    
+p.sigma2 = [0.3,0.3];    %[0.32,0.32,0.32,0.32]; 
+p.depth = [1,1];        %[1,1,1,1];
 ths = 2*sqrt(p.sigma2);
 
-
+tic
 [X,t] = fHMC_opt(T,a,p,num_avg);
-durations = closest_stim(X,p,ths,num_avg);
-disp(durations)
+toc
+% durations = closest_stim(X,p,ths,num_avg);
+% disp(durations)
 %% Plotting
 
 figure('color','w');
@@ -25,7 +26,26 @@ xlabel('x')
 ylabel('y')
 axis equal
 
-hist3(X(:,:,1))
+%% Power spectrum
+figure('color','w');
+subplot(2,1,1)
+sliding_window = 1;
+x = movmean(X(1,:,1),sliding_window);
+plot(t(:),x,'markersize',1)
+hold on
+xlabel('t')
+ylabel('x')
+
+subplot(2,1,2)
+fs = 1/p.dt;
+Y = fft(x);
+n = length(x);
+f = (0:n-1)*fs/n;
+power = abs(Y).^2/n;
+
+plot(f,power)
+xlabel('Frequency (Hz)')
+% xlim([0,1])
 
 
 %% Step distribution

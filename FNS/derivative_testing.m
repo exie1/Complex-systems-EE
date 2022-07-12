@@ -1,20 +1,20 @@
-[x,y] = meshgrid(linspace(-pi,pi,50),linspace(-pi,pi,50));
+[x,y] = meshgrid(linspace(-pi,pi,100),linspace(-pi,pi,100));
 coords = [];
 for i = 1:size(x,1)^2
     coords = [coords, [x(i);y(i)]];
 end
-location = [-5,0;5,0];
-radius = [1,1];
-depth = [1,1];
+location = [-1,1;1,1;-1,-1;1,-1];
+radius = [1,1,1,1]*0.3;
+depth = [1,10,20,30];
 
 fx = 0;
 fy = 0;
 fn = 0;
 for j = 1:length(radius)
-%     stim = depth(j)*exp(-0.5*((coords(1,:)-location(j,1)).^2+...
-%             (coords(2,:)-location(j,2)).^2)/width(j));
-    stim = (coords(1,:)/radius(j) + location(j,1)).^2 + ...
-        (coords(2,:)/radius(j) + location(j,2)).^2 - depth(j);
+    stim = depth(j)*exp(-0.5*((coords(1,:)-location(j,1)).^2+...
+            (coords(2,:)-location(j,2)).^2)/radius(j));
+%     stim = (coords(1,:)/radius(j) + location(j,1)).^2 + ...
+%         (coords(2,:)/radius(j) + location(j,2)).^2 - depth(j);
     fx = fx + stim.*(-(coords(1,:)-location(j,1))/radius(j));
     fy = fy + stim.*(-(coords(2,:)-location(j,2))/radius(j));
     fn = fn + stim;
@@ -24,7 +24,7 @@ f = [fx;fy]./fn;
 
 figure
 subplot(1,3,1)
-plot3(coords(1,:),coords(2,:),fn,'.')
+plot3(coords(1,:),coords(2,:),fn)
 title('Potential well')
 
 subplot(1,3,2)

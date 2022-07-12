@@ -1,4 +1,4 @@
-function [X,t] = fHMC(T,a,p,avg)
+function [X,t] = fHMC_original(T,a,p,avg)
 
     m = 2;
     dt = p.dt;%1e-3; %integration time step (s)

@@ -1,5 +1,6 @@
 function [mean_duration,total_duration] = closest_stim(X,p,ths,avg)
     % Find mean duration the sampling point stays in a stim
+
     mean_duration = zeros(size(p.location,1),avg);
     total_duration = zeros(size(p.location,1),avg);
     for j = 1:avg

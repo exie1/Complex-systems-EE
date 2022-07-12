@@ -1,19 +1,16 @@
-function [X,t,history,history_rad] = fHMC_dynMABGaussian(p,payoffs,MAB_steps)
+function [X,t,history,history_rad,history_sep] = fHMC_dynMABGaussian(p,payoffs)
     % Same fHMC algorithm, but optimised for multi-armed bandit
     % simulations. Change width for bottom-up attention, change depth for
     % top-down attention, change Levy noise for random exploration.
 
-    m = 2;           % dimensions
-    dt = p.dt;%1e-3; % integration time step (s)
-    dta = dt.^(1/p.a); % fractional integration step
-    n = floor(p.T/dt); % number of samples
-    t = (0:n-1)*dt;  % time
-    window = p.T/p.dt/MAB_steps;
+    dt = p.dt;           % integration time step (s)
+    dta = dt.^(1/p.a);   % fractional integration step
+    n = floor(p.T/dt);   % number of samples
+    t = (0:n-1)*dt;      % time
+    window = p.T/p.dt/p.MAB_steps;
     maxVal_d = p.maxVal_d;
-%     maxVal_s = p.maxVal_s;
     
     numWells = length(p.rewardMu);
-    
     
     x = zeros(2,1); % initial condition for each parallel sim
     v = zeros(2,1);     % ^ but velocity
@@ -24,19 +21,23 @@ function [X,t,history,history_rad] = fHMC_dynMABGaussian(p,payoffs,MAB_steps)
     expectation = zeros(1,numWells);
     history = zeros(2,round(n/window)+numWells); 
     history_rad = zeros(numWells,round(n/window));
-%     history_dep = zeros(numWells,round(n/window));
-    X = zeros(m,n);
+    history_sep = zeros(1,round(n/window));
+    X = zeros(2,n);
     
-    % sampling once + adjusting parameters
+    % Sampling once + adjusting parameters
     history(:,1:numWells) = [1:numWells; p.rewardSig.*randn(1,numWells)+p.rewardMu];
     weights = softmax1(history(2,1:numWells),p.temp);
     p.depth = maxVal_d*weights;
-%     p.sigma2 = maxVal_s*weights;
     
+    % Initialising counters
     counter = 1+numWells;               % MAB timestep
     sample_count = zeros(1,numWells);   % how many times has opt been sampled
     exp_hist = history(2,:);            % Discounted payoff history
+    interval = p.maxseparation - p.minseparation;
+    
+    % -------------------BEGIN SIMULATION----------------------------------
     for i = 1:window:n      % num steps separated into time windows   
+        % Executing fHMC simulation steps for time window
         for w = i:i+window-1
             f = getPotential(x,p);
 
@@ -54,13 +55,24 @@ function [X,t,history,history_rad] = fHMC_dynMABGaussian(p,payoffs,MAB_steps)
             x = wrapToPi(x); % apply periodic boundary to avoid run-away
             X(:,w) = x;    % record position
         end
+        
         % Choosing well and sampling from that option + updating payoff history
-        chosen = proximityCheck(X(:,i:w),p.location);
+        [chosen,~] = proximityCheck(X(:,i:w),p.location);
         history(1,counter) = chosen;
         history(2,counter) = p.rewardSig(chosen)*randn()+p.rewardMu(chosen);
         exp_hist(counter) = history(2,counter);
         history_rad(:,counter) = p.depth';
-%         history_dep(:,counter) = p.depth';
+        
+        volatility = [0,0];
+        for well = 1:2
+            volatility(well) = std(history(history(1,max(1,counter-p.swindow):counter)==chosen));
+        end
+
+        history_sep(counter) = total_volatility;
+%         separation = p.maxseparation - interval/total_volatility;
+%         p.location = separation*[-1,0;1,0];
+%         history_sep(counter) = separation;
+
         
         % Multiplying in discount factor 
         exp_hist(history(1,1:counter)==chosen) = exp_hist(history(1,1:counter)==chosen)*p.l;
@@ -75,13 +87,16 @@ function [X,t,history,history_rad] = fHMC_dynMABGaussian(p,payoffs,MAB_steps)
         IB = sqrt(2*log(counter) ./ sample_count);
         
         
-        weights = softmax1(p.n*expectation+(1-p.n)*IB,p.temp);
-        p.depth = maxVal_d*weights; 
+        weights = softmax1(expectation+p.n*IB,p.temp);
+        p.depth = maxVal_d*weights + p.softMin; 
         p.rewardMu = payoffs(counter-numWells,:);
         counter = counter + 1;  
     end
 end
 
+
+
+%% Functions 
 function weights = softmax1(vec,temp)
     % Softmax function
     weights = exp(vec/temp)/sum(exp(vec/temp));
@@ -101,7 +116,6 @@ function f = getPotential(x,p)
         fy = fy + stim.*(-disty/p.sigma2(j));
         fn = fn + stim;
     end
-    f = [fx; fy]./fn;  % log derivative: add e-15 to avoid 0/0.
+    f = [fx; fy]./fn;  % log derivative
 end
-
 
