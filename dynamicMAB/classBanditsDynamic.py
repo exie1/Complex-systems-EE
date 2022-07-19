@@ -14,12 +14,12 @@ class Bandits:
         ''' Sample from Gaussian function with input mean and set variance '''
         return random.normal(mu,self.sigma)
     
-    def genMeans(self,starting_var):
+    def genMeans(self,starting_var,starting_centre):
         ''' Generate the moving payoff according to a decaying Gaussian random walk. 
             Starting_var = how spread apart the options may begin. '''
         # Generate the mean payoff according to a decaying Gaussian random walk (what is decaying?)
         noise = random.normal(0,self.decay_noise,(self.options,self.time))          # Preallocating Gaussian noise for payoff diffusion
-        payoff0 = np.round(random.normal(50,starting_var,(self.options,1)))         # Defining expected payoffs for step 1
+        payoff0 = np.round(random.normal(starting_centre,starting_var,(self.options,1)))         # Defining expected payoffs for step 1
         payoff = np.zeros([self.options,self.time])                                 # Preallocating payoff walker
         payoff[:,0] = np.transpose(payoff0)
         for t in range(1,self.time):                            # Loop over time and generate payoff RW

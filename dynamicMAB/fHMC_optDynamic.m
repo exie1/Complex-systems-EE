@@ -1,4 +1,4 @@
-function [X,t,depth_history] = fHMC_optDynamic(p,avg,payoffs)
+function [X,t] = fHMC_optDynamic(p,avg,payoffs)
 
 %     p.location = rad * [-1,0;1,0];      % For parfor sim
 %     p.sigma2 = sig2*[1,1];
@@ -15,7 +15,6 @@ function [X,t,depth_history] = fHMC_optDynamic(p,avg,payoffs)
     v = zeros(2,avg)+[1;1];
     ca = gamma(a-1)/(gamma(a/2).^2);
 
-    depth_history = zeros(2,size(payoffs,1));
     X = zeros(2,n,avg);
     counter = 1;
     for i = 1:window:n      % num steps separated into time windows   
@@ -40,7 +39,6 @@ function [X,t,depth_history] = fHMC_optDynamic(p,avg,payoffs)
             X(:,w,:) = x;
         end
         p.depth = payoffs(counter,:);
-        depth_history(:,counter) = p.depth';
         counter = counter + 1;
     end
 

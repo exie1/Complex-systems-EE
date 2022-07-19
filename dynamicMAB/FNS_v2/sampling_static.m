@@ -1,7 +1,11 @@
+% Here we apply FNS on a static landscape, and test that the sampling
+% matches up with the end-landscape. 
+
+
 %% Applying FNS sampling on the reward landscape
 clear p
 
-p.location = [-1,1;1,-1];
+p.location = [-1,1;0,0];
 p.sigma2 = [0.3,0.3];
 p.depth = [0,8];
 Id = [1,0;0,1];
@@ -29,10 +33,18 @@ regret = 1 - sum(reward)/sum(optimal_reward);
 disp(regret)
 
 figure
+subplot(1,2,1)
 hold on
 bounds = linspace(-pi,pi,50);
-histogram2(X(1,:),X(2,:),bounds,bounds,'FaceAlpha',1);
+histogram2(X(1,:),X(2,:),bounds,bounds,'FaceAlpha',0.5);
 histogram2(optimal_choices(:,1),optimal_choices(:,2),bounds,bounds,'FaceAlpha',0.5)
+
+subplot(1,2,2)
+H3 = histogram(X(1,:),100,'normalization','pdf');
+hold on
+xx  = H3.BinEdges;
+p2 = 1/sqrt(2*pi*p.sigma2(1))*exp(-0.5*xx.^2/p.sigma2(1));
+plot(xx,p2,'LineWidth',2)
 
 
 %% Evaluate MAB algorithm: first on total time, then reduce trials down

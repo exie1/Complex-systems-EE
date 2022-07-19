@@ -3,10 +3,10 @@
 function [X,t]=demo_2dwell_v4()
 
 %>>>>> parameters >>>>>>>
-a = 1.2; % Levy tail exponent
+a = 1.5; % Levy tail exponent
 p.sigma2 = 0.32; % sigma^2 where sigma is the width of the well
 p.beta = 1; % beta coefficient
-p.gam = 3; % strength of the Levy noise
+p.gam = 2; % strength of the Levy noise
 p.dt = 1e-3; % integration time step
 T = 1e2; % total simulation time
 p.location = pi/2; %modal location 
