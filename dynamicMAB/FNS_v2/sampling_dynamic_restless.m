@@ -17,12 +17,12 @@ p.sigma2 = [1,1]*0.3;
 p.depth = payoffs(1,:);
 Id = [1,0;0,1];
 
-p.a = 1.2;
+p.a = 1.5;
 p.gam = 2;
 p.beta = 1;
 
 p.dt = 1e-3;
-p.T = 5e1;
+p.T = 1e2;
 
 tic
 [X,t] = fHMC_optDynamic(p,1,payoffs);
@@ -36,14 +36,14 @@ plotSwitching(X,t,payoffs)
 [history2, spatial2] = UCB(p,payoffs);
 [history3, spatial3] = softmaxSim(p,payoffs,1);
 
-reward = payoffDynamicInd(X(:,:,1),p,payoffs);
+reward = payoffDynamicEnd(X(:,:,1),p,payoffs);
 
 plotChoices(history1,spatial1,reward,payoffs)
 plotCumulative(reward,history1(2,:),history2(2,:),history3(2,:));
 
 
-figure
-histogram2(reward(2,:),reward(3,:),15)
+% figure
+% histogram2(reward(2,:),reward(3,:),15)
 
 % plotChoices_spatial(X,t,reward,payoffs);
 %%

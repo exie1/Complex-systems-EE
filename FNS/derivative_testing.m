@@ -49,7 +49,7 @@ B = 1*10^-9;
 6*pi*eps*me^3*c^3/(e^4*g*B^2) / (60*60*24*365)
 
 
-%%
+%% 1D test
 
 % bounds = 2;
 % [x,y] = meshgrid(linspace(-bounds,bounds,50),linspace(-bounds,bounds,50));
@@ -82,4 +82,42 @@ plot3(coords(1,1:end-1),coords(2,1:end-1),diff(z)./diff(coords(1,:)))
 title('Gradient of potential (numerical)')
 
 sgtitle(['width: ', num2str(radius),', depth: ', num2str(depth)])
+
+%% 2D truncated Gaussian well
+
+[x,y] = meshgrid(linspace(-pi,pi,100),linspace(-pi,pi,100));
+coords = [];
+for i = 1:size(x,1)^2
+    coords = [coords, [x(i);y(i)]];
+end
+location = [0,0];
+sigma2 = 0.3;
+radius = 1;
+depth = 2;
+
+distx = coords(1,:) - location(1);
+disty = coords(2,:) - location(2);
+
+% Potential function
+z = depth * ((distx.^2 + disty.^2) / radius - 1);
+truncated_z = -z .* (z <= 0);
+
+% Gradient function
+grad = -2 * depth * [distx, disty] / radius;
+
+% Log gradient function
+
+
+hold on
+plot3(coords(1,:),coords(2,:),truncated_z)
+title('Potential well')
+legend('depth 1','depth 2')
+
+
+%% Functions
+function dist = norm1(vec)
+    % Vec should be 2x10000 or smth
+    dist = sqrt(vec(1,:).^2 + vec(2,:).^2);
+end
+
 

@@ -1,7 +1,7 @@
 %% Importing a stepped reward function
 % The payoff increments every 500 or so simulation steps
 clear p
-payoffs = (csvread('payoffs\payoffs_randstep.csv')')*5;
+payoffs = (csvread('payoffs_randstep.csv')')*5+1;
 payoff_time = size(payoffs,1);
 
 
@@ -21,7 +21,7 @@ p.dt = 1e-3;
 p.T = 1e2;
 
 tic
-[X,t] = fHMC_optDynamic(p,1000,payoffs);
+[X,t] = fHMC_optDynamic(p,2,payoffs);
 toc
 
 
@@ -31,7 +31,7 @@ plotSwitching(X(:,:,1),t,payoffs)
 % plotMesh(p)
 
 %% Looping stuff
-averages = 1000;
+averages = 1;
 
 history_dUCB = zeros(averages,payoff_time);
 history_UCB = zeros(averages,payoff_time);
@@ -51,6 +51,7 @@ toc
 %%
 
 [reward,spatial_FNS] = payoffDynamicEnd(X,p,payoffs);
+% reward = payoffDynamicInd(X,p,payoffs);
 
 
 plotCumulative(reward,history_dUCB,history_UCB,history_softmax);
@@ -102,9 +103,10 @@ function [reward_array, sampled_array] = payoffDynamicEnd(coords,p,payoff)
     end
 end
 
-function reward_array = payoffDynamicInd(coords,p,payoff)
+function [reward_array, sampled_array] = payoffDynamicInd(coords,p,payoff)
     % Collect rewards independently from most sampled well
-    reward_array = zeros(4,size(payoff,1));
+    reward_array = zeros(size(coords,3), size(payoff,1));
+    sampled_array = zeros(2, size(coords,3), size(payoff,1));
     step_ratio = size(coords,2) / size(payoff,1);
     Id = [1,0;0,1];
     
@@ -116,9 +118,8 @@ function reward_array = payoffDynamicInd(coords,p,payoff)
                                 p.sigma2(chosen_option)*Id,1);
         sampled_reward = payoffStatic(sampled_point,p,payoff(step+1,:));
         
-        reward_array(1,step+1) = sampled_reward;
-        reward_array(2:3,step+1) = sampled_point';     
-        reward_array(4,step+1) = chosen_option;
+        reward_array(:,step+1) = sampled_reward;
+        sampled_array(:,:,step+1) = sampled_point; 
     end
 end
 
@@ -418,7 +419,7 @@ end
 
 
 
-%% Finding 
+%% Finding proportions in window
 % time_window = 25:75;
 % [cnt_unique, uniq] = hist(reward(4,time_window),unique(reward(4,time_window)));
 % cnt_unique
