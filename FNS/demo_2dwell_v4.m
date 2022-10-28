@@ -4,11 +4,11 @@ function [X,t]=demo_2dwell_v4()
 
 %>>>>> parameters >>>>>>>
 a = 1.5; % Levy tail exponent
-p.sigma2 = 0.32; % sigma^2 where sigma is the width of the well
+p.sigma2 = 0.1; % sigma^2 where sigma is the width of the well
 p.beta = 1; % beta coefficient
 p.gam = 2; % strength of the Levy noise
 p.dt = 1e-3; % integration time step
-T = 1e2; % total simulation time
+T = 6e1; % total simulation time
 p.location = pi/2; %modal location 
 p.skip = 100; %number of time steps to skip for the video
 animate = false; %set true to show video
@@ -68,7 +68,6 @@ xx  = H2.BinEdges;
 p1 = 1/sqrt(2*pi*p.sigma2)*exp(-0.5*xx.^2/p.sigma2);
 %p2 = exp(-0.5*(x(1)+p.location).^2/p.sigma2 - 0.5*x(2).^2/p.sigma2 );
 plot(xx,p1,'linewidth',1.5) 
-subplot(2,1,2)
 
 subplot(2,1,2)
 H3 = histogram(X(1,:),100,'normalization','pdf');

@@ -168,52 +168,29 @@ simu_time_tot = 1000*ms # simulation time
 
 simu_time1 = simu_time_tot 
 net.run(simu_time1, profile=False) 
-
 print('total time elapsed:',time.perf_counter() - tic, 'seconds')
 
-#%%
+
 '''save data to hard disk'''
 spk_tstep_e1 = np.round(spk_e_1.t/(0.1*ms)).astype(int)
 spk_tstep_i1 = np.round(spk_i_1.t/(0.1*ms)).astype(int)
 
 param_all = {'delta_gk':delta_gk_,
-         #'new_delta_gk':new_delta_gk_,
          'tau_k': 60,
-         #'new_tau_k':40,
          'tau_s_di':tau_s_di_,
          'tau_s_de':tau_s_de_,
          'tau_s_r':tau_s_r_,
-         #'scale_d_p_i':scale_d_p_i,
          'num_ee':num_ee,
          'num_ei':num_ei,
          'num_ii':num_ii,
          'num_ie':num_ie,
-         #'ie_ratio':ie_ratio_,
-         #'mean_J_ee': ijwd1.mean_J_ee,
-         #'chg_adapt_range':6, 
-         #'p_ee':p_ee,
-         #'simutime':int(round(simu_time_tot/ms)),
-         #'chg_adapt_time': simu_time1/ms,
-         #'chg_adapt_range': chg_adapt_range,
-         # 'chg_adapt_loca': chg_adapt_loca,
-         #'chg_adapt_neuron': chg_adapt_neuron,
-         #'scale_ee_1': scale_ee_1,
-         #'scale_ei_1': scale_ei_1,
-         #'scale_ie_1': scale_ie_1,
-         #'scale_ii_1': scale_ii_1,
-         # 'ie_r_e': ie_r_e,
-         # 'ie_r_e1':ie_r_e1,   
-         # #'ie_r_e2':ie_r_e2,
-         # 'ie_r_i': ie_r_i,
-         # 'ie_r_i1': ie_r_i1,
          't_ref': t_ref/ms}
 
 now = datetime.datetime.now()
-data = {'datetime':now.strftime("%Y-%m-%d %H:%M:%S"), 'dt':0.1, #'loop_num':loop_num, 
+data = {'datetime':now.strftime("%Y-%m-%d %H:%M:%S"), 'dt':0.1,  
         'data_dir': os.getcwd(),
         'param':param_all,
         'a1':{'param':param_a1,
-              #'LFP':{'lfp1':lfp_moni.lfp1/nA, 'lfp2':lfp_moni.lfp2/nA, 'lfp3':lfp_moni.lfp3/nA},
               'ge':{'i':spk_e_1.i[:],'t':spk_tstep_e1},
               'gi':{'i':spk_i_1.i[:],'t':spk_tstep_i1}}}
 
@@ -235,6 +212,3 @@ plt.ylabel('Neuron Index')
 plt.title('Spike times per neuron index')
 plt.show()
 
-
-
-# %%

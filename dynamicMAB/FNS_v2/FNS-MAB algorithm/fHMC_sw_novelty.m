@@ -1,4 +1,4 @@
-function [X,t,history,reward_points,d_history] = fHMC_MABv2(p,payoffs)
+function [X,t,history,reward_points,d_history] = fHMC_sw_novelty(p,payoffs,switching)
     % Coupling the FNSv2 scheme to proper non-stationary MAB problems. 
     % We use the dUCB + softmax scheme now to artifically change
     % the sampled proportions of FNS. 
@@ -25,7 +25,6 @@ function [X,t,history,reward_points,d_history] = fHMC_MABv2(p,payoffs)
     % Initialising recording arrays
     EV = zeros(1,numWells);
     history = zeros(2,MAB_time); 
-    history_discounted = zeros(1,MAB_time);
     reward_points = zeros(2,MAB_time);
     d_history = zeros(numWells,MAB_time);
     X = zeros(2,n);
@@ -38,23 +37,26 @@ function [X,t,history,reward_points,d_history] = fHMC_MABv2(p,payoffs)
     for option = 1:numWells     
         sampled_point = mvnrnd(p.location(option,:),p.sigma2(option)*Id,1);
         sampled_reward = generateReward(sampled_point,p,payoffs(option,:));
-
         history(:,option) = [option ; sampled_reward];
-        history_discounted(option) = sampled_reward;
     end
+    
     % --- Set starting weights / depth ---
-    p.depth = softmax1(history(2,1:numWells),p.temp);
-    d_history(:,1) = p.depth';
+    depth_old = softmax1(history(2,1:numWells),p.temp);
+    d_history(:,1) = depth_old';
+    depth_smooth = ones(numWells,window).*depth_old';
     
     % --- Initialise counters ---
-    counter = 1+numWells;               % Current MAB step
-    sample_count = zeros(1,numWells);   % How many times has opt been sampled
+    counter = 1+numWells;              % Current MAB step
+    sample_count = ones(1,numWells);   % How many times has opt been sampled
+    switch_c = [1,1,1];         % Compute history until last switch
     
+     
 % ============================================================
 %                   BEGIN FNS-MAB SIMULATION
 % ============================================================
-    for i = 1 : window : n          % Sim time separated into MAB windows   
+    for i = 1 : window : n          % Sim time separated into MAB windows 
         for w = i:i+window-1    % Execute fHMC simulation in window
+            p.depth = depth_smooth(:,w-i+1);
             f = getPotential(x,p);
 
             dL = stblrnd(p.a,0,p.gam,0,[2,1]); 
@@ -72,35 +74,43 @@ function [X,t,history,reward_points,d_history] = fHMC_MABv2(p,payoffs)
             X(:,w) = x;    % record position
         end
         
+        
         % --- Pick one point from history and return payoff ---
         chosen_point = X(:,w - floor(window/2))';
         chosen_option = wellCheck(chosen_point,p,payoffs(counter,:));
         
-%         chosen_point = mvnrnd(p.location(chosen_option,:),p.sigma2(chosen_option)*Id,1);
+        chosen_point = mvnrnd(p.location(chosen_option,:),p.sigma2(chosen_option)*Id,1);
         reward = generateReward(chosen_point,p,payoffs(counter,:));
         
         
         % --- Record reward and chosen option + applying discount ---
         reward_points(:,counter) = chosen_point;
         history(:,counter) = [chosen_option ; reward];
-        history_discounted(counter) = history(2,counter);
-        history_discounted(history(1,1:counter)==chosen_option) = ...
-             history_discounted(history(1,1:counter)==chosen_option)*p.l;
-%     
+        sample_count(chosen_option) = sample_count(chosen_option) + 1;
     % ============================================================
     %       Update beliefs w/ dUCB + softmax: apply to depth
     % ============================================================
             
-        for opt = 1:numWells
-            option_vec = (history(1,1:counter) == opt);
-            rewards_disc = history_discounted(1:counter) .* option_vec;
-            EV(opt) = mean(rewards_disc(rewards_disc~=0));
-            sample_count(opt) = sum(option_vec);
+        match = find(trial == switching(1,:));
+        if match
+            switch_c(switching(2,match)+1) = trial;
+        end
+        
+    
+        for opt = 1:numWells         
+            option_trials = (history(1,switch_c(opt):trial) == opt);  % Logical of each option
+            times_sampled = sum(option_trials); % Times sampled of each option
+            % Compute discounted expected value and information bonus
+            EV(opt) = mean(option_trials.* discounted_history(switch_c(opt):trial));
+            IB(opt) = sqrt(2*log(trial-switch_c(opt)) ./ times_sampled);
         end
         IB = sqrt(2*log(counter) ./ sample_count);
         
-        p.depth = softmax1(EV+p.n*IB,p.temp);
-        d_history(:,counter) = p.depth';
+        depth_new = softmax1(EV+p.n*IB,p.temp);
+        depth_smooth = smoothSwitching(depth_old,depth_new,15,window);
+        depth_old = depth_new;
+        
+        d_history(:,counter) = depth_new';
         counter = counter + 1;  
     end
 end
@@ -157,6 +167,12 @@ function chosen = wellCheck(x,p,payoff)
         
 end
 
-function sdepth = smoothSwitching(depth,time)
-    
+function depth_array = smoothSwitching(depth1,depth2,switching_time,window)
+    % Generate a smooth transition in depth.
+    depth_array = zeros(length(depth1),window);
+    depth_array(:,switching_time+1:window) = ones(length(depth1),window-switching_time).*depth2';
+    for i = 1:length(depth1)
+        depth_array(i,1:switching_time) = linspace(depth1(i),depth2(i),switching_time);
+    end
+
 end

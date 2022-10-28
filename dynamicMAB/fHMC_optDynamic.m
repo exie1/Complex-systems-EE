@@ -1,10 +1,9 @@
-function [X,t] = fHMC_optDynamic(p,avg,payoffs)
+function [X,t] = fHMC_optDynamic(p,avg,payoffs,a)
 
 %     p.location = rad * [-1,0;1,0];      % For parfor sim
 %     p.sigma2 = sig2*[1,1];
     
     T = p.T;
-    a = p.a;
     dt = p.dt;%1e-3; %integration time step (s)
     dta = dt.^(1/a); %fractional integration step
     n = floor(T/dt); %number of samples

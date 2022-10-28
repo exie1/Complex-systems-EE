@@ -1,51 +1,57 @@
 %% Just checking the truncated wells are functioning
-
-p.location = [0,0];%[-1,1;1,-1]*pi/2;
-p.radius = 2.5;
-p.depth = 50;
-
-p.a = 1.5;
-p.gam = 2;
-p.beta = 1;
-
-p.dt = 1e-3;
-p.T = 1e2;
-
-tic
-[X,t] = fHMC_quadratic(p,30,1);
-toc
-
-[mean_dwt,std_dwt,total_dwt] = dwellingTime(X,p);
-
-disp([mean(mean_dwt),mean(std_dwt)])
-plotSampling(X,p)
-
-%%
-hold on
-H2 = histogram(X(1,:,1),100,'normalization','pdf');
-
-%% Loopage: compute results array
+% Run this code block for 1 simulation, and check the end sampled landscape
 
 % Defining well parameters
-p.location = [0,0];    p.radius = 2.5; 
+p.location = [0,0];     p.radius = 3;   p.depth = 10;
 
 % Defining walker parameters
 p.a = 1.5;      p.gam = 2;      p.beta = 1;
 
-% Defining simulation parameters
-p.dt = 1e-3;    p.T = 1e3;
+% Defining imulation parameters
+p.dt = 1e-3;    p.T = 1e2;      avg = 1;
+
+tic     % Execute simulation for truncated quadratic wells
+[X,t] = fHMC_quadratic(p,avg,p.radius,p.depth);
+toc
+
+% Compute the mean and std of dwelling time 
+[mean_dwt,std_dwt,total_dwt] = dwellingTime(X,p);
+disp('Mean and std of dwelling time:')
+disp([mean(mean_dwt),mean(std_dwt)])
+
+% Plot sampled distribution
+plotSampling(X,p)
+
+% Plot histogram of dwelling times
+in_times = dwellingDist(X,p);
+figure
+histogram(in_times,100)
+xlabel('Dwelling time (s)')
+
+
+%% Loopage: compute results array
+
+% Defining well parameters
+p.location = [0,0];    p.radius = 1;    p.depth = 10; 
+
+% Defining walker parameters
+p.a = 1.5;      p.gam = 2;      p.beta = 1;
+
+% Defining simulation parameters 
+p.dt = 1e-3;    p.T = 1e2;
 
 % Initializing recording arrays
-numStep = 24;
+numStep = 4;
 mean_dwt_array = zeros(1,numStep);
 std_dwt_array = zeros(1,numStep);
 error_mean = zeros(1,numStep);
 error_std = zeros(1,numStep);
 
-depth_array = linspace(1,50,numStep);
+% radius_array = linspace(1,pi,numStep);  % Loop over radius or depth
+depth_array = linspace(1,20,numStep);
 
 parfor i = 1:numStep
-    [X,t] = fHMC_quadratic(p,30,depth_array(i));
+    [X,t] = fHMC_quadratic(p,20,p.radius,depth_array(i));
     
     [mean_dwt,std_dwt,total_dwt] = dwellingTime(X,p);
     mean_dwt_array(i) = mean(mean_dwt);
@@ -55,16 +61,16 @@ parfor i = 1:numStep
     error_std(i) = std(std_dwt);
     disp(i)
 end
-%%
+
 plotDwelling(depth_array,mean_dwt_array,std_dwt_array,error_mean,error_std)
+
+
 
 %% Functions
 
-function [X,t] = fHMC_quadratic(p,avg,depth)
+function [X,t] = fHMC_quadratic(p,avg,radius,depth)
 
-%     p.location = rad * [-1,0;1,0];      % For parfor sim
-%     p.sigma2 = sig2*[1,1];
-%     p.depth = [1,depth];
+    p.radius = radius;
     p.depth = depth;
     T = p.T;
     a = p.a;
@@ -110,13 +116,10 @@ function f = makePotential(x,p)
 
         % Gradient function
         grad = -2 * p.depth(j) .* [distx; disty] / p.radius(j);
-%         f = f - grad .* (z <= 0) ./z;   % Log gradient
-        f =  f + grad .* (z<=0);    % Normal gradient
+%         f = f - grad .* (z <= 0) ./z;   % Log gradient for pdf
+        f =  f + grad .* (z<=0);    % Normal gradient for force
     end
-    
-    % Log gradient function?
-    
-    
+      
 end
 
 function [mean_duration,std_duration,total_duration] = dwellingTime(X,p)
@@ -125,7 +128,6 @@ function [mean_duration,std_duration,total_duration] = dwellingTime(X,p)
     mean_duration = zeros(length(p.depth),avg);
     std_duration = zeros(length(p.depth),avg);
     total_duration = zeros(length(p.depth),avg);
-%     dwelling_array = {};
     for j = 1:avg
         for i = 1:size(p.location,1)
             loc = p.location(i,:);
@@ -135,11 +137,23 @@ function [mean_duration,std_duration,total_duration] = dwellingTime(X,p)
             exit_indices = find([false,in_stim]~=[in_stim,false]);
             
             in_stim_times = (exit_indices(2:2:end) - exit_indices(1:2:end-1))*p.dt;
-%             dwelling_array{j} = in_stim_times;
-            mean_duration(i,j) = mean(in_stim_times);
-            std_duration(i,j) = std(in_stim_times);
-            total_duration(i,j) = sum(in_stim_times);
+            filt_stim_times = in_stim_times(in_stim_times>0);
+            mean_duration(i,j) = mean(filt_stim_times);
+            std_duration(i,j) = std(filt_stim_times);
+            total_duration(i,j) = sum(filt_stim_times);
         end
+    end
+end
+
+function in_stim_times = dwellingDist(X,p)
+    for i = 1:size(p.location,1)
+        loc = p.location(i,:);
+        dist_stim = sqrt((X(1,:,1)-loc(1)).^2 + (X(2,:,1)-loc(2)).^2);
+
+        in_stim = [0,(dist_stim < p.radius(i)),0];
+        exit_indices = find([false,in_stim]~=[in_stim,false]);
+
+        in_stim_times = (exit_indices(2:2:end) - exit_indices(1:2:end-1))*p.dt;
     end
 end
 

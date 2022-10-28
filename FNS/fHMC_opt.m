@@ -43,7 +43,7 @@ function f = makeGaussian(x,p)
     for j = 1:size(p.location,1) % optimise: compute x,y stuff together
         distx = x(1,:)-p.location(j,1);
         disty = x(2,:)-p.location(j,2);
-        stim = p.depth(j) * exp(-0.5*(distx.^2+disty.^2)/p.sigma2(j));
+        stim = p.depth(j) * exp(-0.5*(distx.^2+disty.^2)/p.sigma2(j))/sum(p.depth);
 
         fx = fx + stim.*(-distx/p.sigma2(j));
         fy = fy + stim.*(-disty/p.sigma2(j));
